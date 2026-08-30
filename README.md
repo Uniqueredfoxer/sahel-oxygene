@@ -104,6 +104,39 @@ frontend/
     components/    # Logo, StatutPill, PadSignature, RouteProtegee
 ```
 
+## Déploiement production
+
+### Frontend
+
+Créer un fichier `.env.production` dans `frontend/` :
+
+```bash
+VITE_API_URL=https://your-backend-domain.com/api
+VITE_SOCKET_URL=https://your-backend-domain.com
+```
+
+Le frontend est prévu pour être hébergé sur Vercel, Netlify ou un autre hébergeur statique. Le fichier [frontend/vercel.json](frontend/vercel.json) permet le bon fonctionnement des routes SPA.
+
+### Backend
+
+Créer un fichier `.env` dans `backend/` à partir de [backend/.env.example](backend/.env.example) avec :
+
+```bash
+DB_HOST=your-db-host
+DB_PORT=5432
+DB_NAME=sahel_oxygene
+DB_USER=postgres
+DB_PASSWORD=your-strong-password
+JWT_SECRET=your-very-strong-secret-min-32-chars
+PORT=10000
+NODE_ENV=production
+PUBLIC_APP_URL=https://your-frontend-domain.com
+ALLOWED_ORIGINS=https://your-frontend-domain.com
+SUPER_ADMIN_EMAILS=admin@example.com
+```
+
+Les instructions complètes de déploiement sont dans [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Limites connues / à faire avant une mise en production
 
 - Le nom du manifeste PWA (icône d'accueil mobile) est figé au moment du

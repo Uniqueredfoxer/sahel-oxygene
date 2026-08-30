@@ -2,11 +2,17 @@ import { io } from 'socket.io-client';
 
 let socket = null;
 
+function getSocketBaseUrl() {
+  const configured = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
+  if (configured) return configured.replace(/\/$/, '');
+  return window.location.origin;
+}
+
 export function getSocket() {
   const token = localStorage.getItem('sahel_token');
   
   if (!socket) {
-    socket = io('/', {
+    socket = io(getSocketBaseUrl(), {
       autoConnect: Boolean(token),
       transports: ['websocket', 'polling'],
       auth: {
