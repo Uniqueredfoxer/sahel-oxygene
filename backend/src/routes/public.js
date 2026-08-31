@@ -17,7 +17,7 @@ function urlVerification(qrToken) {
 // POST /api/public/livraisons — formulaire de commande client, sans compte (§3.1)
 router.post('/livraisons', async (req, res) => {
   try {
-    const {
+    let {
       clientNom,
       clientTelephone,
       adresseDepart,
@@ -29,10 +29,16 @@ router.post('/livraisons', async (req, res) => {
       distanceKm: distanceFournie,
     } = req.body;
 
-    if (!clientTelephone || !adresseDepart || !adresseDestination) {
+    if (!clientTelephone || !adresseDestination) {
       return res.status(400).json({
-        error: 'Téléphone, adresse de départ et destination sont obligatoires',
+        error: 'Téléphone et adresse de destination sont obligatoires',
       });
+    }
+
+    if (!adresseDepart) {
+      adresseDepart = 'Dépôt SAHEL OXYGENE (Bobo-Dioulasso)';
+      departLat = departLat || 11.1772;
+      departLng = departLng || -4.2979;
     }
 
     let distanceKm = distanceFournie ? Number(distanceFournie) : null;

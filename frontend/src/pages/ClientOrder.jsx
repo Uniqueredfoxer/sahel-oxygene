@@ -5,6 +5,7 @@ import {
   CreditCard,
   CheckCircle2,
   Flame,
+  Package,
   ArrowRight,
   ArrowLeft,
   AlertTriangle,
@@ -15,6 +16,9 @@ import {
   User,
   ShieldCheck,
   Edit3,
+  Plus,
+  Minus,
+  Check,
 } from 'lucide-react';
 import api, { messageErreur } from '../api/client';
 import Logo from '../components/Logo';
@@ -22,24 +26,59 @@ import SelecteurItineraireMap from '../components/SelecteurItineraireMap';
 import { useToast } from '../context/ToastContext';
 
 const ETAPES = [
-  { id: 0, titre: 'Trajet', Icon: MapPin },
+  { id: 0, titre: 'Commande', Icon: Flame },
   { id: 1, titre: 'Tarif & Récap', Icon: CreditCard },
   { id: 2, titre: 'Confirmation', Icon: CheckCircle2 },
 ];
 
+const TYPES_BOUTEILLES = [
+  {
+    id: 'recharge_6kg',
+    label: 'Recharge 6 kg (B6)',
+    desc: 'Échange standard bouteille vide contre pleine',
+    badge: 'Populaire',
+    capacite: '6 kg',
+  },
+  {
+    id: 'recharge_12kg',
+    label: 'Recharge 12.5 kg (B12)',
+    desc: 'Grand format pour ménages et cuisine',
+    badge: 'Économique',
+    capacite: '12.5 kg',
+  },
+  {
+    id: 'complete_6kg',
+    label: 'Complète 6 kg (Bouteille + Gaz)',
+    desc: 'Nouvelle bouteille neuve consignée + charge gaz',
+    capacite: '6 kg',
+  },
+  {
+    id: 'complete_12kg',
+    label: 'Complète 12.5 kg (Bouteille + Gaz)',
+    desc: 'Nouvelle bouteille neuve consignée + charge gaz',
+    capacite: '12.5 kg',
+  },
+];
+
 export default function ClientOrder() {
+  const [modeService, setModeService] = useState('gaz'); // 'gaz' | 'course'
+  const [typeBouteille, setTypeBouteille] = useState('recharge_6kg');
+  const [quantiteGaz, setQuantiteGaz] = useState(1);
+  const [descriptionColis, setDescriptionColis] = useState('');
+
   const [etape, setEtape] = useState(0);
   const [form, setForm] = useState({
     clientNom: '',
     clientTelephone: '',
-    adresseDepart: '',
+    adresseDepart: 'Dépôt SAHEL OXYGENE (Bobo-Dioulasso)',
     adresseDestination: '',
-    departLat: null,
-    departLng: null,
+    departLat: 11.1772,
+    departLng: -4.2979,
     destinationLat: null,
     destinationLng: null,
     distanceKm: '',
   });
+
   const [estimation, setEstimation] = useState(null);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState('');
@@ -77,14 +116,20 @@ export default function ClientOrder() {
   const passerAuRecap = async (e) => {
     e.preventDefault();
     setErreur('');
-    if (!form.adresseDepart.trim() || !form.adresseDestination.trim() || !form.distanceKm || !form.clientTelephone.trim()) {
-      setErreur('Veuillez renseigner le départ, la destination, et votre numéro de téléphone.');
+
+    if (!form.adresseDestination.trim() || !form.clientTelephone.trim()) {
+      setErreur('Veuillez renseigner votre adresse de livraison et votre numéro de téléphone.');
+      return;
+    }
+
+    if (modeService === 'course' && !form.adresseDepart.trim()) {
+      setErreur('Veuillez renseigner l’adresse d’enlèvement (départ).');
       return;
     }
 
     const dist = parseFloat(form.distanceKm);
     if (Number.isNaN(dist) || dist <= 0) {
-      setErreur('Veuillez sélectionner votre trajet sur la carte ou saisir une distance valide.');
+      setErreur('Veuillez sélectionner votre lieu de livraison sur la carte.');
       return;
     }
 
@@ -104,9 +149,21 @@ export default function ClientOrder() {
   const confirmerCommande = async () => {
     setChargement(true);
     setErreur('');
+
+    const bouteilleChoisie = TYPES_BOUTEILLES.find((b) => b.id === typeBouteille);
+    const detailArticle =
+      modeService === 'gaz'
+        ? `${quantiteGaz}x ${bouteilleChoisie?.label || 'Bouteille de Gaz'}`
+        : descriptionColis || 'Course Personnalisée';
+
+    const payload = {
+      ...form,
+      clientNom: form.clientNom ? `${form.clientNom} [${detailArticle}]` : `[${detailArticle}]`,
+    };
+
     try {
-      const { data } = await api.post('/public/livraisons', form);
-      setResultat(data);
+      const { data } = await api.post('/public/livraisons', payload);
+      setResultat({ ...data, detailArticle, quantiteGaz });
       setEtape(2);
       toast.succes('Commande enregistrée avec succès !');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -120,15 +177,15 @@ export default function ClientOrder() {
   return (
     <div className="min-h-screen flex flex-col bg-sable-50">
       {/* Navigation Header */}
-      <header className="px-5 py-3.5 border-b border-charbon-100 bg-white/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between shadow-sm">
+      <header className="px-5 py-3.5 border-b border-charbon-100 bg-white/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between shadow-xs">
         <Logo />
         <div className="flex items-center gap-3">
           <Link
             to="/gaz"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-sahel-dark hover:bg-emerald-100 transition-colors border border-emerald-200/50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-sahel-dark hover:bg-emerald-100 transition-colors border border-emerald-200/60"
           >
             <Flame className="w-3.5 h-3.5 text-sahel fill-sahel/20" />
-            <span>Trouver du gaz</span>
+            <span>Points de vente</span>
           </Link>
           <Link
             to="/connexion"
@@ -155,7 +212,7 @@ export default function ClientOrder() {
             return (
               <div key={item.id} className="relative z-10 flex flex-col items-center">
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200 shadow-sm ${
+                  className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-200 shadow-xs ${
                     actuel
                       ? 'bg-sahel text-white ring-4 ring-emerald-100 scale-110 shadow-emerald'
                       : fait
@@ -182,18 +239,137 @@ export default function ClientOrder() {
       <main className="flex-1 px-5 py-6 max-w-lg mx-auto w-full">
         {etape === 0 && (
           <form onSubmit={passerAuRecap} className="space-y-5 animate-slide-up">
-            <div className="card p-6 md:p-8 shadow-card space-y-2">
-              <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 uppercase tracking-wider mb-1 border border-amber-200/60">
-                Sans inscription
-              </span>
-              <h1 className="font-display text-2xl font-bold text-slate-900">Commander une course</h1>
-              <p className="text-slate-500 text-xs leading-relaxed">
-                Recherchez vos adresses ou déplacez les repères sur la carte. La distance et le tarif sont calculés automatiquement.
-              </p>
+            {/* Mode Switcher Tabs */}
+            <div className="bg-slate-200/80 p-1 rounded-2xl grid grid-cols-2 gap-1 shadow-inner">
+              <button
+                type="button"
+                onClick={() => {
+                  setModeService('gaz');
+                  setForm((f) => ({
+                    ...f,
+                    adresseDepart: 'Dépôt SAHEL OXYGENE (Bobo-Dioulasso)',
+                    departLat: 11.1772,
+                    departLng: -4.2979,
+                  }));
+                }}
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  modeService === 'gaz'
+                    ? 'bg-white text-sahel-dark shadow-sm scale-100'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Flame className={`w-4 h-4 ${modeService === 'gaz' ? 'text-sahel fill-sahel/30' : ''}`} />
+                <span>Bouteille de Gaz</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModeService('course')}
+                className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  modeService === 'course'
+                    ? 'bg-white text-slate-900 shadow-sm scale-100'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Package className={`w-4 h-4 ${modeService === 'course' ? 'text-slate-900' : ''}`} />
+                <span>Course Express / Colis</span>
+              </button>
             </div>
 
-            {/* Interactive Map Route Picker */}
+            {/* Bouteille Selector (Gas Mode) */}
+            {modeService === 'gaz' && (
+              <div className="card p-5 shadow-card space-y-3.5 bg-white border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                    <Flame className="w-4 h-4 text-sahel" />
+                    <span>Sélectionnez votre bouteille</span>
+                  </h2>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    Bobo-Dioulasso & Ouaga
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {TYPES_BOUTEILLES.map((b) => {
+                    const estChoisi = typeBouteille === b.id;
+                    return (
+                      <div
+                        key={b.id}
+                        onClick={() => setTypeBouteille(b.id)}
+                        className={`cursor-pointer p-3 rounded-xl border transition-all relative ${
+                          estChoisi
+                            ? 'border-sahel bg-emerald-50/50 ring-2 ring-sahel/20 shadow-xs'
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        {b.badge && (
+                          <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                            {b.badge}
+                          </span>
+                        )}
+                        <div className="flex items-start gap-2">
+                          <div
+                            className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center ${
+                              estChoisi ? 'border-sahel bg-sahel text-white' : 'border-slate-300'
+                            }`}
+                          >
+                            {estChoisi && <Check className="w-2.5 h-2.5" />}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-900 leading-snug">{b.label}</p>
+                            <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{b.desc}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Quantity counter */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-xs font-semibold text-slate-700">Nombre de bouteilles :</span>
+                  <div className="flex items-center gap-3 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setQuantiteGaz(Math.max(1, quantiteGaz - 1))}
+                      className="w-7 h-7 rounded-lg bg-white text-slate-700 flex items-center justify-center font-bold shadow-xs hover:bg-slate-50 active:scale-95"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="font-display font-bold text-sm text-slate-900 min-w-4 text-center">
+                      {quantiteGaz}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantiteGaz(quantiteGaz + 1)}
+                      className="w-7 h-7 rounded-lg bg-sahel text-white flex items-center justify-center font-bold shadow-xs hover:bg-sahel-dark active:scale-95"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Custom Courier Description (Course Mode) */}
+            {modeService === 'course' && (
+              <div className="card p-4 shadow-card space-y-2 bg-white border-slate-200">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                  Description du colis / course <span className="text-slate-400 font-normal">(optionnel)</span>
+                </label>
+                <input
+                  type="text"
+                  className="input text-xs"
+                  placeholder="Ex : Documents urgents, plis, petits colis..."
+                  value={descriptionColis}
+                  onChange={(e) => setDescriptionColis(e.target.value)}
+                />
+              </div>
+            )}
+
+            {/* Interactive Map Component */}
             <SelecteurItineraireMap
+              mode={modeService === 'gaz' ? 'destination_seule' : 'trajet_complet'}
               initialDepart={form.adresseDepart}
               initialDestination={form.adresseDestination}
               initialDistance={form.distanceKm}
@@ -201,10 +377,10 @@ export default function ClientOrder() {
             />
 
             {/* Contact Details Card */}
-            <div className="card p-5 md:p-6 shadow-card space-y-4">
+            <div className="card p-5 shadow-card space-y-4 bg-white border-slate-200">
               <h3 className="font-display font-bold text-sm text-slate-900 flex items-center gap-1.5">
                 <User className="w-4 h-4 text-sahel" />
-                <span>Vos coordonnées</span>
+                <span>Vos coordonnées pour la livraison</span>
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -215,7 +391,7 @@ export default function ClientOrder() {
                   <div className="relative">
                     <input
                       className="input pl-8 text-xs"
-                      placeholder="Ex : Salif"
+                      placeholder="Ex : Adam"
                       value={form.clientNom}
                       onChange={champ('clientNom')}
                     />
@@ -225,7 +401,7 @@ export default function ClientOrder() {
 
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5 block">
-                    Numéro de téléphone
+                    Numéro de téléphone WhatsApp
                   </label>
                   <div className="relative">
                     <input
@@ -240,194 +416,229 @@ export default function ClientOrder() {
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Toggle manual distance override */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setModeManuel(!modeManuel)}
-                  className="text-[11px] font-medium text-slate-400 hover:text-slate-600 flex items-center gap-1"
-                >
-                  <Edit3 className="w-3 h-3" />
-                  <span>{modeManuel ? 'Masquer ajustement manuel' : 'Ajuster distance manuellement'}</span>
-                </button>
-                {form.distanceKm && (
-                  <span className="text-xs font-mono font-bold text-sahel-dark bg-emerald-50 px-2 py-0.5 rounded">
-                    {form.distanceKm} km
+            {/* Error banner */}
+            {erreur && (
+              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
+                <span className="font-medium">{erreur}</span>
+              </div>
+            )}
+
+            {/* Action Submit */}
+            <button
+              type="submit"
+              disabled={chargement}
+              className="btn-primary w-full py-4 text-sm font-bold shadow-md flex items-center justify-center gap-2"
+            >
+              {chargement ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Calcul de l'itinéraire…</span>
+                </>
+              ) : (
+                <>
+                  <span>Voir le récapitulatif & tarif</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* Étape 1 : Récapitulatif & Tarif */}
+        {etape === 1 && (
+          <div className="space-y-5 animate-slide-up">
+            <div className="card p-6 shadow-card space-y-4 bg-white border-slate-200">
+              <h2 className="font-display text-xl font-bold text-slate-900 flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-sahel" />
+                <span>Récapitulatif de la commande</span>
+              </h2>
+
+              {/* Service Details */}
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-700">Type de service :</span>
+                  <span className="text-xs font-bold text-emerald-800">
+                    {modeService === 'gaz'
+                      ? `🔥 ${quantiteGaz}x ${TYPES_BOUTEILLES.find((b) => b.id === typeBouteille)?.label}`
+                      : '📦 Course Express / Colis'}
                   </span>
+                </div>
+                {modeService === 'course' && descriptionColis && (
+                  <div className="flex items-center justify-between text-xs text-slate-600">
+                    <span>Colis :</span>
+                    <span className="font-medium">{descriptionColis}</span>
+                  </div>
                 )}
               </div>
 
-              {modeManuel && (
-                <div className="pt-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1 block">
-                    Distance personnalisée (km)
-                  </label>
-                  <input
-                    type="number"
-                    min="0.1"
-                    step="0.1"
-                    className="input font-mono text-xs"
-                    value={form.distanceKm}
-                    onChange={champ('distanceKm')}
-                    required
-                  />
+              {/* Trajet Details */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 text-sahel font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    A
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      Départ
+                    </span>
+                    <p className="text-xs font-semibold text-slate-800">{form.adresseDepart}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    B
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      Livraison (Destination)
+                    </span>
+                    <p className="text-xs font-semibold text-slate-800">{form.adresseDestination}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coordonnées Client */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-slate-500">Contact client :</span>
+                <span className="font-mono font-bold text-slate-800">
+                  {form.clientNom ? `${form.clientNom} — ` : ''}
+                  {form.clientTelephone}
+                </span>
+              </div>
+
+              {/* Tarif Total Card */}
+              {estimation && (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 to-emerald-950 text-white space-y-1 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-emerald-200">Distance routière</span>
+                    <span className="text-xs font-mono font-semibold">{estimation.distanceKm} km</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    <span className="text-sm font-bold">Frais de livraison</span>
+                    <span className="font-display text-2xl font-bold text-emerald-400">
+                      {estimation.montant?.toLocaleString('fr-FR')} FCFA
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
 
             {erreur && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>{erreur}</span>
+              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
+                <span className="font-medium">{erreur}</span>
               </div>
             )}
 
-            <button type="submit" className="btn-primary w-full text-base flex items-center justify-center gap-2 py-3.5" disabled={chargement}>
-              <span>{chargement ? 'Calcul en cours…' : 'Valider mon itinéraire'}</span>
-              {!chargement && <ArrowRight className="w-4 h-4" />}
-            </button>
-          </form>
-        )}
-
-        {etape === 1 && estimation && (
-          <div className="card p-6 md:p-8 space-y-6 animate-slide-up shadow-card">
-            <div>
-              <h1 className="font-display text-2xl font-bold text-slate-900">Récapitulatif de la course</h1>
-              <p className="text-slate-500 text-sm mt-1">Vérifiez les informations avant de confirmer.</p>
-            </div>
-
-            {/* Trajet visual card */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="flex flex-col items-center pt-1">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-100" />
-                  <div
-                    className="w-0.5 h-12 my-1"
-                    style={{
-                      background: 'repeating-linear-gradient(to bottom, #167942 0 4px, transparent 4px 8px)',
-                    }}
-                  />
-                  <div className="w-3 h-3 rounded-full bg-slate-800 ring-4 ring-slate-200" />
-                </div>
-                <div className="flex-1 space-y-5">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Départ</span>
-                    <p className="font-semibold text-slate-800 text-sm leading-snug">{form.adresseDepart}</p>
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Destination</span>
-                    <p className="font-semibold text-slate-800 text-sm leading-snug">{form.adresseDestination}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Price Box */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-sahel-dark via-sahel to-emerald-700 text-white shadow-emerald flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-emerald-200 font-semibold">Tarif Garanti</span>
-                  <p className="font-display text-3xl font-bold font-mono mt-1">
-                    {estimation.montant.toLocaleString('fr-FR')} FCFA
-                  </p>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold font-mono">
-                  {estimation.distanceKm} km
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-emerald-100/80 mt-3 pt-3 border-t border-white/10">
-                <ShieldCheck className="w-4 h-4 text-emerald-300 shrink-0" />
-                <span>Paiement à la livraison • Reçu PDF certifié avec QR Code</span>
-              </div>
-            </div>
-
-            {erreur && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>{erreur}</span>
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-2">
-              <button type="button" className="btn-secondary flex-1 flex items-center justify-center gap-2" onClick={() => setEtape(0)}>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setEtape(0)}
+                className="btn-secondary flex-1 py-3.5 text-xs font-semibold"
+              >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Modifier</span>
               </button>
+
               <button
                 type="button"
-                className="btn-primary flex-1 flex items-center justify-center gap-2"
                 onClick={confirmerCommande}
                 disabled={chargement}
+                className="btn-primary flex-2 py-3.5 text-sm font-bold shadow-md"
               >
-                <span>{chargement ? 'Enregistrement…' : 'Confirmer la course'}</span>
-                {!chargement && <CheckCircle2 className="w-4 h-4" />}
+                {chargement ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Enregistrement…</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Confirmer la commande</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
         )}
 
+        {/* Étape 2 : Confirmation */}
         {etape === 2 && resultat && (
-          <div className="card p-6 md:p-8 space-y-6 text-center animate-slide-up shadow-card">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-3xl shadow-md">
-              <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+          <div className="card p-6 md:p-8 shadow-card space-y-5 text-center bg-white border-slate-200 animate-slide-up">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 text-sahel flex items-center justify-center mx-auto shadow-sm">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
 
             <div>
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-sahel-dark uppercase tracking-wider mb-2 border border-emerald-200/60">
-                Commande validée
-              </span>
-              <h1 className="font-display text-2xl font-bold text-slate-900">Votre course est en route !</h1>
-              <p className="text-slate-500 text-sm mt-1">
+              <h2 className="font-display text-2xl font-bold text-slate-900">Commande Confirmée !</h2>
+              <p className="text-xs text-slate-500 mt-1">
                 Numéro de suivi :{' '}
-                <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
-                  {resultat.livraison.numero}
+                <span className="font-mono font-bold text-sahel-dark bg-emerald-50 px-2 py-0.5 rounded">
+                  {resultat.livraison?.numero}
                 </span>
               </p>
             </div>
 
-            {resultat.lienWhatsAppNotification && (
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200/70 space-y-2.5">
-                <p className="text-xs text-emerald-900 font-medium">
-                  Pour accélérer la prise en charge, notifiez notre équipe en 1 clic :
-                </p>
-                <a
-                  href={resultat.lienWhatsAppNotification}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-primary w-full bg-[#25D366] hover:bg-[#1EBE5D] shadow-none flex items-center justify-center gap-2 text-white"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Envoyer sur WhatsApp</span>
-                </a>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Service :</span>
+                <span className="font-semibold text-slate-800">{resultat.detailArticle}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Adresse de livraison :</span>
+                <span className="font-semibold text-slate-800 text-right max-w-52 line-clamp-1">
+                  {resultat.livraison?.adresseDestination}
+                </span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-slate-200">
+                <span className="text-slate-500">Montant de la livraison :</span>
+                <span className="font-bold text-sahel-dark">{resultat.livraison?.montant} FCFA</span>
+              </div>
+            </div>
+
+            {/* WhatsApp 1-Click dispatch */}
+            {resultat.lienWhatsAppNotification && (
+              <a
+                href={resultat.lienWhatsAppNotification}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-4 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]"
+              >
+                <Send className="w-4 h-4" />
+                <span>Envoyer ma commande sur WhatsApp</span>
+              </a>
             )}
 
-            <div className="flex flex-col gap-2 pt-2">
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-2">
               <button
-                className="btn-primary w-full flex items-center justify-center gap-2"
-                onClick={() => navigate(`/suivi/${resultat.livraison.numero}`)}
+                type="button"
+                onClick={() => navigate(`/suivi/${resultat.livraison?.numero}`)}
+                className="btn-primary w-full py-3 text-xs font-semibold"
               >
-                <Navigation className="w-4 h-4" />
-                <span>Suivre la livraison en direct</span>
+                <span>Suivre mon livreur sur la carte</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
+
               <button
-                className="btn-secondary w-full flex items-center justify-center gap-2"
+                type="button"
                 onClick={() => {
-                  setForm({
-                    clientNom: '',
-                    clientTelephone: '',
-                    adresseDepart: '',
-                    adresseDestination: '',
-                    distanceKm: '',
-                  });
-                  setEstimation(null);
-                  setResultat(null);
                   setEtape(0);
+                  setResultat(null);
+                  setForm((f) => ({
+                    ...f,
+                    adresseDestination: '',
+                    destinationLat: null,
+                    destinationLng: null,
+                    distanceKm: '',
+                  }));
                 }}
+                className="btn-secondary w-full py-3 text-xs font-semibold"
               >
-                <RefreshCw className="w-4 h-4" />
-                <span>Commander une autre course</span>
+                Nouvelle commande
               </button>
             </div>
           </div>

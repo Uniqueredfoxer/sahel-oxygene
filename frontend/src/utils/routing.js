@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { extraireCoordonnees } from './geo';
 
-// Centre par défaut : Ouagadougou, Burkina Faso
-export const CENTRE_DEFAUT = { lat: 12.3714, lng: -1.5197 };
+// Centre par défaut : Bobo-Dioulasso, Burkina Faso
+export const CENTRE_DEFAUT = { lat: 11.1772, lng: -4.2979, ville: 'Bobo-Dioulasso' };
+export const CENTRE_OUAGA = { lat: 12.3714, lng: -1.5197, ville: 'Ouagadougou' };
 
 /**
  * Calcule la distance orthodromique (Haversine) en km

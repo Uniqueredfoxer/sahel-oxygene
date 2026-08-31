@@ -1,5 +1,5 @@
 /**
- * Utilitaire de géolocalisation robuste avec stratégie de repli (High accuracy -> Low accuracy -> Diagnostic).
+ * Utilitaire de géolocalisation haute précision et parseur d'adresses/liens Google Maps.
  */
 
 export function extraireCoordonnees(texte) {
@@ -7,19 +7,19 @@ export function extraireCoordonnees(texte) {
 
   const t = texte.trim();
 
-  // Format "12.3714, -1.5197" ou "12.3714 -1.5197"
-  const regexSimple = /^(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)$/;
+  // 1. Format direct "11.1772, -4.2979" ou "11.1772 -4.2979" ou "11.1772;-4.2979"
+  const regexSimple = /^(-?\d{1,2}(?:\.\d+)?)[,\s;]+(-?\d{1,3}(?:\.\d+)?)$/;
   const matchSimple = t.match(regexSimple);
   if (matchSimple) {
     const lat = parseFloat(matchSimple[1]);
-    const lng = parseFloat(matchSimple[3]);
+    const lng = parseFloat(matchSimple[2]);
     if (!Number.isNaN(lat) && !Number.isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
       return { lat, lng };
     }
   }
 
-  // Format Google Maps URL: /@12.3714,-1.5197 ou ?q=12.3714,-1.5197 ou ll=12.3714,-1.5197
-  const regexMaps = /[@?&](?:q|ll|loc:)?(-?\d+\.\d+),(-?\d+\.\d+)/;
+  // 2. Format Google Maps URL: /@11.1772,-4.2979 ou ?q=11.1772,-4.2979 ou ll=11.1772,-4.2979 ou daddr=11.1772,-4.2979
+  const regexMaps = /(?:@|\?q=|&q=|ll=|daddr=|loc:)(-?\d{1,2}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/;
   const matchMaps = t.match(regexMaps);
   if (matchMaps) {
     const lat = parseFloat(matchMaps[1]);
@@ -29,19 +29,29 @@ export function extraireCoordonnees(texte) {
     }
   }
 
+  // 3. Format geo:11.1772,-4.2979
+  const regexGeo = /geo:(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/i;
+  const matchGeo = t.match(regexGeo);
+  if (matchGeo) {
+    const lat = parseFloat(matchGeo[1]);
+    const lng = parseFloat(matchGeo[2]);
+    if (!Number.isNaN(lat) && !Number.isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+      return { lat, lng };
+    }
+  }
+
   return null;
 }
 
 /**
- * Tente d'obtenir la position GPS de l'utilisateur avec gestion de timeout et repli progressif.
- * @returns {Promise<{ lat: number, lng: number, source: string }>}
+ * Tente d'obtenir la position GPS réelle et précise de l'appareil.
+ * @returns {Promise<{ lat: number, lng: number, precisionMetres: number, source: string }>}
  */
 export async function obtenirPositionGPS() {
   if (typeof window === 'undefined' || !navigator.geolocation) {
     throw new Error('La géolocalisation n’est pas supportée par votre navigateur ou appareil.');
   }
 
-  // Vérification contexte sécurisé (HTTPS ou localhost obligatoire pour l'API Geolocation)
   if (
     window.isSecureContext === false &&
     window.location.hostname !== 'localhost' &&
@@ -55,65 +65,52 @@ export async function obtenirPositionGPS() {
   const capturePosition = (options) =>
     new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (pos) =>
+          resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            precisionMetres: Math.round(pos.coords.accuracy || 10),
+          }),
         (err) => reject(err),
         options
       );
     });
 
-  // Étape 1 : Essai haute précision (GPS mobile / satellite) avec timeout de 5 secondes
+  // 1. Essai prioritaire : Haute précision GPS (satellite mobile)
   try {
     const pos = await capturePosition({
       enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 10000,
+      timeout: 10000,
+      maximumAge: 0,
     });
-    return { ...pos, source: 'gps_haute_precision' };
+    return { ...pos, source: 'gps_satellite' };
   } catch (err1) {
-    // Si l'utilisateur a explicitement refusé (code 1 = PERMISSION_DENIED), on s'arrête
     if (err1.code === 1) {
       throw new Error(
-        'Accès à la position refusé. Veuillez autoriser la localisation dans les paramètres de votre navigateur.'
+        'Accès à la position refusé. Veuillez autoriser la localisation dans les réglages de votre navigateur.'
       );
     }
 
-    // Étape 2 : Repli vers basse précision (Wi-Fi / réseaux mobiles / cache)
+    // 2. Essai secondaire : Mode réseau cellulaire / Wi-Fi
     try {
       const pos = await capturePosition({
         enableHighAccuracy: false,
-        timeout: 7000,
-        maximumAge: 60000,
+        timeout: 8000,
+        maximumAge: 30000,
       });
-      return { ...pos, source: 'reseau_basse_precision' };
+      return { ...pos, source: 'gps_reseau' };
     } catch (err2) {
       if (err2.code === 1) {
         throw new Error(
-          'Accès à la position refusé. Veuillez autoriser la localisation dans les paramètres du navigateur.'
+          'Accès à la position refusé. Veuillez autoriser la localisation dans les réglages du navigateur.'
         );
       }
 
-      // Étape 3 : Tentative de secours par géolocalisation IP (si disponible et connecté)
-      try {
-        const res = await fetch('https://ipapi.co/json/', { timeout: 4000 });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.latitude && data.longitude) {
-            return {
-              lat: Number(data.latitude),
-              lng: Number(data.longitude),
-              source: 'ip_approximative',
-            };
-          }
-        }
-      } catch {
-        /* ignore */
-      }
-
-      let message = 'Signal GPS introuvable ou indisponible sur cet appareil.';
+      let message = 'Signal GPS introuvable. Touchez directement votre quartier sur la carte ou collez un repère Google Maps.';
       if (err2.code === 3) {
-        message = 'Délai d’attente du signal GPS dépassé. Veuillez réessayer ou entrer les coordonnées manuellement.';
+        message = 'Délai d’attente GPS dépassé. Veuillez toucher la carte pour indiquer votre position.';
       } else if (err2.code === 2) {
-        message = 'Position indisponible : activez le GPS de votre appareil ou saisissez les coordonnées.';
+        message = 'Position indisponible sur cet appareil : sélectionnez votre emplacement sur la carte.';
       }
 
       throw new Error(message);
