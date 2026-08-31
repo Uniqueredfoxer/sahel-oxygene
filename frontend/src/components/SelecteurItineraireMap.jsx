@@ -321,6 +321,28 @@ export default function SelecteurItineraireMap({
     }, 280);
   };
 
+  const appliquerSecteurBobo = (secteur) => {
+    const label = `${secteur.nom} (${secteur.secteur}), Bobo-Dioulasso`;
+    setPointDest({ lat: secteur.lat, lng: secteur.lng, label });
+    setTexteDest(label);
+    setDistanceKm(secteur.distanceKm);
+    setMontantEstime(secteur.tarifFCFA);
+    setSuggestionsDest([]);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setView([secteur.lat, secteur.lng], 15);
+    }
+    onItineraireChange?.({
+      adresseDepart: texteDepart || 'Dépôt SAHEL OXYGENE (Djaradougou, Bobo-Dioulasso)',
+      departLat: pointDepart?.lat || 11.1850,
+      departLng: pointDepart?.lng || -4.2980,
+      adresseDestination: label,
+      destinationLat: secteur.lat,
+      destinationLng: secteur.lng,
+      distanceKm: secteur.distanceKm,
+      montantEstime: secteur.tarifFCFA,
+    });
+  };
+
   const appliquerCoordonneesDestination = async (lat, lng, labelPersonnalise) => {
     const addr = labelPersonnalise || (await geocoderInverse(lat, lng));
     setPointDest({ lat, lng, label: addr });
@@ -551,7 +573,7 @@ export default function SelecteurItineraireMap({
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+          <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
             {SECTEURS_BOBO.map((s) => {
               const estSelectionne =
                 pointDest &&
@@ -562,26 +584,27 @@ export default function SelecteurItineraireMap({
                 <button
                   key={s.id}
                   type="button"
-                  onClick={() =>
-                    appliquerCoordonneesDestination(
-                      s.lat,
-                      s.lng,
-                      `${s.nom} (${s.secteur}), Bobo-Dioulasso`
-                    )
-                  }
-                  className={`px-2 py-1 text-[11px] font-medium rounded-lg border transition-all flex items-center gap-1 ${
+                  onClick={() => appliquerSecteurBobo(s)}
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border transition-all flex items-center gap-1.5 ${
                     estSelectionne
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                       : 'bg-slate-50 hover:bg-emerald-50 hover:text-sahel-dark hover:border-emerald-200 text-slate-700 border-slate-200'
                   }`}
                 >
-                  <span>{s.nom}</span>
+                  <span className="font-semibold">{s.nom}</span>
                   <span
                     className={`text-[9px] font-mono px-1 py-0.2 rounded ${
                       estSelectionne ? 'bg-emerald-700 text-emerald-100' : 'bg-slate-200/80 text-slate-600'
                     }`}
                   >
                     {s.distanceKm} km
+                  </span>
+                  <span
+                    className={`text-[9px] font-mono font-bold px-1 py-0.2 rounded ${
+                      estSelectionne ? 'bg-emerald-800 text-emerald-200' : 'bg-emerald-100 text-emerald-800'
+                    }`}
+                  >
+                    {s.tarifFCFA} F
                   </span>
                 </button>
               );
