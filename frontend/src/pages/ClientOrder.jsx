@@ -22,6 +22,8 @@ import {
   Receipt,
   Truck,
   Tag,
+  Trash2,
+  Layers,
 } from 'lucide-react';
 import api, { messageErreur } from '../api/client';
 import Logo from '../components/Logo';
@@ -86,9 +88,17 @@ function calculerFraisLivraisonLocal(distKm) {
 
 export default function ClientOrder() {
   const [modeService, setModeService] = useState('gaz'); // 'gaz' | 'course'
-  const [marqueGaz, setMarqueGaz] = useState('sodigaz');
-  const [typeBouteille, setTypeBouteille] = useState('recharge_6kg');
-  const [quantiteGaz, setQuantiteGaz] = useState(1);
+  
+  // Panier multi-bouteilles
+  const [panierGaz, setPanierGaz] = useState([
+    {
+      id: 1,
+      marque: 'sodigaz',
+      typeBouteille: 'recharge_6kg',
+      quantite: 1,
+    },
+  ]);
+
   const [descriptionColis, setDescriptionColis] = useState('');
 
   const [etape, setEtape] = useState(0);
@@ -108,22 +118,57 @@ export default function ClientOrder() {
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState('');
   const [resultat, setResultat] = useState(null);
-  const [modeManuel, setModeManuel] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
 
-  const bouteilleChoisie = TYPES_BOUTEILLES.find((b) => b.id === typeBouteille) || TYPES_BOUTEILLES[0];
-  const marqueChoisie = MARQUES_GAZ.find((m) => m.id === marqueGaz) || MARQUES_GAZ[0];
-  const sousTotalGaz = modeService === 'gaz' ? bouteilleChoisie.prixUnitaire * quantiteGaz : 0;
+  // Gestion du panier
+  const ajouterBouteille = () => {
+    setPanierGaz((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        marque: 'sodigaz',
+        typeBouteille: 'recharge_6kg',
+        quantite: 1,
+      },
+    ]);
+  };
+
+  const supprimerBouteille = (id) => {
+    if (panierGaz.length <= 1) return;
+    setPanierGaz((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const modifierLigne = (id, champ, valeur) => {
+    setPanierGaz((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [champ]: valeur } : item))
+    );
+  };
+
+  // Calculs financiers
+  const sousTotalGaz =
+    modeService === 'gaz'
+      ? panierGaz.reduce((acc, item) => {
+          const b = TYPES_BOUTEILLES.find((t) => t.id === item.typeBouteille);
+          return acc + (b?.prixUnitaire || 2000) * item.quantite;
+        }, 0)
+      : 0;
+
+  const totalBouteilles =
+    modeService === 'gaz' ? panierGaz.reduce((acc, item) => acc + item.quantite, 0) : 0;
 
   const distanceValide = Boolean(form.distanceKm && parseFloat(form.distanceKm) > 0);
-  const destinationRenseignee = Boolean(form.adresseDestination && form.adresseDestination.trim().length > 0);
+  const destinationRenseignee = Boolean(
+    form.adresseDestination && form.adresseDestination.trim().length > 0
+  );
   const itinerairePret = distanceValide && destinationRenseignee;
 
   const fraisLivraisonEstime = itinerairePret
-    ? (estimation?.montant || calculerFraisLivraisonLocal(form.distanceKm))
+    ? estimation?.montant || calculerFraisLivraisonLocal(form.distanceKm)
     : null;
-  const totalGeneralEstime = fraisLivraisonEstime !== null ? sousTotalGaz + fraisLivraisonEstime : null;
+
+  const totalGeneralEstime =
+    fraisLivraisonEstime !== null ? sousTotalGaz + fraisLivraisonEstime : null;
 
   const champ = (nom) => (e) => {
     const val = e.target.value;
@@ -188,12 +233,22 @@ export default function ClientOrder() {
     setChargement(true);
     setErreur('');
 
-    const detailArticle =
-      modeService === 'gaz'
-        ? `${quantiteGaz}x ${bouteilleChoisie.label} [Marque: ${marqueChoisie.label}]`
-        : descriptionColis || 'Course Personnalisée';
+    // Description textuelle complète du panier
+    let detailArticle = '';
+    if (modeService === 'gaz') {
+      const lignes = panierGaz.map((item) => {
+        const b = TYPES_BOUTEILLES.find((t) => t.id === item.typeBouteille);
+        const m = MARQUES_GAZ.find((mg) => mg.id === item.marque);
+        return `${item.quantite}x ${b?.label || 'Bouteille'} [${m?.label || item.marque}]`;
+      });
+      detailArticle = lignes.join(' + ');
+    } else {
+      detailArticle = descriptionColis || 'Course Express';
+    }
 
-    const montantTotal = (modeService === 'gaz' ? sousTotalGaz : 0) + (estimation?.montant || fraisLivraisonEstime || 1000);
+    const montantTotal =
+      (modeService === 'gaz' ? sousTotalGaz : 0) +
+      (estimation?.montant || fraisLivraisonEstime || 1000);
 
     const payload = {
       ...form,
@@ -206,12 +261,11 @@ export default function ClientOrder() {
       setResultat({
         ...data,
         detailArticle,
+        panierGaz: [...panierGaz],
         sousTotalGaz,
         fraisLivraison: estimation?.montant || fraisLivraisonEstime || 1000,
         totalGeneral: montantTotal,
-        quantiteGaz,
-        nomBouteille: bouteilleChoisie.label,
-        nomMarque: marqueChoisie.label,
+        totalBouteilles,
       });
       setEtape(2);
       toast.succes('Commande enregistrée avec succès !');
@@ -325,113 +379,171 @@ export default function ClientOrder() {
               </button>
             </div>
 
-            {/* Bouteille Selector (Gas Mode) */}
+            {/* Bouteille Selector (Gas Mode - Multi-bouteilles) */}
             {modeService === 'gaz' && (
-              <div className="card p-5 shadow-card space-y-4 bg-white border-slate-200">
-                {/* 1. Sélection de la Marque */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="font-display font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5 text-sahel" />
-                      <span>1. Marque / Modèle de votre bouteille</span>
-                    </h2>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                      Dépôt Djaradougou
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                    {MARQUES_GAZ.map((m) => {
-                      const estChoisi = marqueGaz === m.id;
-                      return (
-                        <button
-                          key={m.id}
-                          type="button"
-                          onClick={() => setMarqueGaz(m.id)}
-                          className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-center flex flex-col items-center justify-center gap-0.5 ${
-                            estChoisi
-                              ? 'border-sahel bg-emerald-50 text-sahel-dark ring-2 ring-sahel/30 shadow-xs'
-                              : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
-                          }`}
-                        >
-                          <span className="truncate w-full">{m.label}</span>
-                          {estChoisi && <Check className="w-3 h-3 text-sahel" />}
-                        </button>
-                      );
-                    })}
-                  </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                    <Flame className="w-4 h-4 text-sahel" />
+                    <span>Vos bouteilles de gaz</span>
+                  </h2>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                    Dépôt Djaradougou
+                  </span>
                 </div>
 
-                {/* 2. Format / Type de bouteille */}
-                <div className="pt-2 border-t border-slate-100">
-                  <h3 className="font-display font-bold text-xs uppercase tracking-wider text-slate-800 mb-2 flex items-center gap-1.5">
-                    <Flame className="w-3.5 h-3.5 text-sahel" />
-                    <span>2. Format de bouteille</span>
-                  </h3>
+                {panierGaz.map((item, index) => {
+                  const bouteilleInfo =
+                    TYPES_BOUTEILLES.find((b) => b.id === item.typeBouteille) || TYPES_BOUTEILLES[0];
+                  const marqueInfo =
+                    MARQUES_GAZ.find((m) => m.id === item.marque) || MARQUES_GAZ[0];
+                  const sousTotalLigne = bouteilleInfo.prixUnitaire * item.quantite;
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {TYPES_BOUTEILLES.map((b) => {
-                      const estChoisi = typeBouteille === b.id;
-                      return (
-                        <div
-                          key={b.id}
-                          onClick={() => setTypeBouteille(b.id)}
-                          className={`cursor-pointer p-3 rounded-xl border transition-all relative ${
-                            estChoisi
-                              ? 'border-sahel bg-emerald-50/50 ring-2 ring-sahel/20 shadow-xs'
-                              : 'border-slate-200 hover:border-slate-300 bg-white'
-                          }`}
-                        >
-                          {b.badge && (
-                            <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
-                              {b.badge}
-                            </span>
-                          )}
-                          <div className="flex items-start gap-2">
-                            <div
-                              className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
-                                estChoisi ? 'border-sahel bg-sahel text-white' : 'border-slate-300'
-                              }`}
+                  return (
+                    <div
+                      key={item.id}
+                      className="card p-4 shadow-card bg-white border border-slate-200 rounded-2xl space-y-3.5 relative animate-fade-in"
+                    >
+                      {/* Header de la ligne */}
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-emerald-100 text-sahel font-bold text-xs flex items-center justify-center">
+                            {index + 1}
+                          </span>
+                          <span className="font-display font-bold text-xs text-slate-800">
+                            Bouteille #{index + 1}
+                          </span>
+                        </div>
+
+                        {panierGaz.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => supprimerBouteille(item.id)}
+                            className="text-slate-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition-colors"
+                            title="Retirer cet article"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* 1. Sélection de la Marque */}
+                      <div>
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
+                          Marque de la bouteille
+                        </label>
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                          {MARQUES_GAZ.map((m) => {
+                            const estChoisi = item.marque === m.id;
+                            return (
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => modifierLigne(item.id, 'marque', m.id)}
+                                className={`py-1.5 px-1.5 rounded-xl text-[11px] font-bold transition-all border text-center flex flex-col items-center justify-center ${
+                                  estChoisi
+                                    ? 'border-sahel bg-emerald-50 text-sahel-dark ring-2 ring-sahel/30 shadow-xs'
+                                    : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+                                }`}
+                              >
+                                <span className="truncate w-full">{m.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 2. Format / Type de bouteille */}
+                      <div>
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
+                          Format / Type
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {TYPES_BOUTEILLES.map((b) => {
+                            const estChoisi = item.typeBouteille === b.id;
+                            return (
+                              <div
+                                key={b.id}
+                                onClick={() => modifierLigne(item.id, 'typeBouteille', b.id)}
+                                className={`cursor-pointer p-2.5 rounded-xl border transition-all relative ${
+                                  estChoisi
+                                    ? 'border-sahel bg-emerald-50/50 ring-2 ring-sahel/20 shadow-xs'
+                                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                                }`}
+                              >
+                                {b.badge && (
+                                  <span className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1 py-0.5 rounded bg-amber-100 text-amber-800">
+                                    {b.badge}
+                                  </span>
+                                )}
+                                <div className="flex items-start gap-2">
+                                  <div
+                                    className={`w-3.5 h-3.5 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
+                                      estChoisi ? 'border-sahel bg-sahel text-white' : 'border-slate-300'
+                                    }`}
+                                  >
+                                    {estChoisi && <Check className="w-2 h-2" />}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-900 leading-tight">{b.label}</p>
+                                    <p className="text-[11px] font-mono font-bold text-sahel-dark mt-0.5">
+                                      {b.prixUnitaire.toLocaleString('fr-FR')} FCFA
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 3. Quantité & Sous-total ligne */}
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-slate-600">Quantité :</span>
+                          <div className="flex items-center gap-2 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                modifierLigne(item.id, 'quantite', Math.max(1, item.quantite - 1))
+                              }
+                              className="w-6 h-6 rounded bg-white text-slate-700 flex items-center justify-center font-bold shadow-xs hover:bg-slate-50 active:scale-95 text-xs"
                             >
-                              {estChoisi && <Check className="w-2.5 h-2.5" />}
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-slate-900 leading-snug">{b.label}</p>
-                              <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{b.desc}</p>
-                              <p className="text-xs font-mono font-bold text-sahel-dark mt-1">
-                                {b.prixUnitaire.toLocaleString('fr-FR')} FCFA
-                              </p>
-                            </div>
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="font-display font-bold text-xs text-slate-900 min-w-4 text-center">
+                              {item.quantite}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => modifierLigne(item.id, 'quantite', item.quantite + 1)}
+                              className="w-6 h-6 rounded bg-sahel text-white flex items-center justify-center font-bold shadow-xs hover:bg-sahel-dark active:scale-95 text-xs"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
 
-                {/* 3. Quantité */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <span className="text-xs font-semibold text-slate-700">Nombre de bouteilles :</span>
-                  <div className="flex items-center gap-3 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setQuantiteGaz(Math.max(1, quantiteGaz - 1))}
-                      className="w-7 h-7 rounded-lg bg-white text-slate-700 flex items-center justify-center font-bold shadow-xs hover:bg-slate-50 active:scale-95"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="font-display font-bold text-sm text-slate-900 min-w-4 text-center">
-                      {quantiteGaz}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setQuantiteGaz(quantiteGaz + 1)}
-                      className="w-7 h-7 rounded-lg bg-sahel text-white flex items-center justify-center font-bold shadow-xs hover:bg-sahel-dark active:scale-95"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 block">Sous-total</span>
+                          <span className="font-mono font-bold text-xs text-slate-900">
+                            {sousTotalLigne.toLocaleString('fr-FR')} FCFA
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Bouton Ajouter une autre bouteille */}
+                <button
+                  type="button"
+                  onClick={ajouterBouteille}
+                  className="w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-emerald-50/60 hover:bg-emerald-100/70 text-sahel-dark font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-98"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Ajouter une autre bouteille (autre marque ou format)</span>
+                </button>
               </div>
             )}
 
@@ -508,7 +620,7 @@ export default function ClientOrder() {
                 <div className="flex items-center justify-between text-xs text-emerald-200">
                   <span>
                     {modeService === 'gaz'
-                      ? `${quantiteGaz}x ${bouteilleChoisie.label} (${marqueChoisie.label})`
+                      ? `Gaz (${totalBouteilles} bouteille${totalBouteilles > 1 ? 's' : ''})`
                       : 'Course Express'}
                   </span>
                   <span className="font-mono font-bold">
@@ -540,7 +652,7 @@ export default function ClientOrder() {
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-800">
                     {modeService === 'gaz'
-                      ? `🔥 ${quantiteGaz}x ${bouteilleChoisie.label} (${marqueChoisie.label})`
+                      ? `🔥 Total Gaz (${totalBouteilles} bouteille${totalBouteilles > 1 ? 's' : ''})`
                       : '📦 Course Express'}
                   </span>
                   <span className="font-mono font-bold text-slate-900">
@@ -597,37 +709,38 @@ export default function ClientOrder() {
                 <span>Détail de votre commande</span>
               </h2>
 
-              {/* Service Details */}
-              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-700">Article :</span>
-                  <span className="font-bold text-emerald-800">
-                    {modeService === 'gaz'
-                      ? `🔥 ${quantiteGaz}x ${bouteilleChoisie.label} — ${marqueChoisie.label}`
-                      : '📦 Course Express / Colis'}
-                  </span>
+              {/* Service Details & Articles List */}
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between font-bold text-emerald-900 border-b border-emerald-200/60 pb-1.5">
+                  <span>{modeService === 'gaz' ? '🔥 Bouteilles commandées' : '📦 Course Express'}</span>
+                  <span>{totalBouteilles} article{totalBouteilles > 1 ? 's' : ''}</span>
                 </div>
-                {modeService === 'gaz' && (
-                  <>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>Marque sélectionnée :</span>
-                      <span className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">
-                        {marqueChoisie.label}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <span>Prix unitaire bouteille :</span>
-                      <span className="font-mono font-semibold">
-                        {bouteilleChoisie.prixUnitaire.toLocaleString('fr-FR')} FCFA
-                      </span>
-                    </div>
-                  </>
-                )}
-                {modeService === 'course' && descriptionColis && (
-                  <div className="flex items-center justify-between text-slate-600">
-                    <span>Colis :</span>
-                    <span className="font-medium">{descriptionColis}</span>
+
+                {modeService === 'gaz' ? (
+                  <div className="space-y-1.5">
+                    {panierGaz.map((item, idx) => {
+                      const b = TYPES_BOUTEILLES.find((t) => t.id === item.typeBouteille);
+                      const m = MARQUES_GAZ.find((mg) => mg.id === item.marque);
+                      const prix = (b?.prixUnitaire || 2000) * item.quantite;
+                      return (
+                        <div key={idx} className="flex items-center justify-between text-slate-700">
+                          <span>
+                            {item.quantite}x {b?.label} <span className="font-semibold text-slate-900">({m?.label})</span>
+                          </span>
+                          <span className="font-mono font-bold text-slate-900">
+                            {prix.toLocaleString('fr-FR')} FCFA
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
+                ) : (
+                  descriptionColis && (
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Colis :</span>
+                      <span className="font-medium">{descriptionColis}</span>
+                    </div>
+                  )
                 )}
               </div>
 
@@ -671,7 +784,7 @@ export default function ClientOrder() {
               <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 to-emerald-950 text-white space-y-2 shadow-md">
                 {modeService === 'gaz' && (
                   <div className="flex items-center justify-between text-xs text-emerald-200">
-                    <span>Gaz ({quantiteGaz}x {marqueChoisie.label})</span>
+                    <span>Sous-total Gaz ({totalBouteilles} bouteille{totalBouteilles > 1 ? 's' : ''})</span>
                     <span className="font-mono font-semibold">{sousTotalGaz.toLocaleString('fr-FR')} FCFA</span>
                   </div>
                 )}
@@ -750,8 +863,10 @@ export default function ClientOrder() {
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">Article :</span>
-                <span className="font-semibold text-slate-800">{resultat.detailArticle}</span>
+                <span className="text-slate-500">Articles :</span>
+                <span className="font-semibold text-slate-800 max-w-56 text-right line-clamp-2">
+                  {resultat.detailArticle}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Adresse de livraison :</span>
@@ -801,6 +916,14 @@ export default function ClientOrder() {
                 onClick={() => {
                   setEtape(0);
                   setResultat(null);
+                  setPanierGaz([
+                    {
+                      id: 1,
+                      marque: 'sodigaz',
+                      typeBouteille: 'recharge_6kg',
+                      quantite: 1,
+                    },
+                  ]);
                   setForm((f) => ({
                     ...f,
                     adresseDestination: '',
