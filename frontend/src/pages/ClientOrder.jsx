@@ -103,8 +103,15 @@ export default function ClientOrder() {
 
   const bouteilleChoisie = TYPES_BOUTEILLES.find((b) => b.id === typeBouteille) || TYPES_BOUTEILLES[0];
   const sousTotalGaz = modeService === 'gaz' ? bouteilleChoisie.prixUnitaire * quantiteGaz : 0;
-  const fraisLivraisonEstime = estimation?.montant || (form.distanceKm ? calculerFraisLivraisonLocal(form.distanceKm) : 1000);
-  const totalGeneralEstime = sousTotalGaz + fraisLivraisonEstime;
+  
+  const distanceValide = Boolean(form.distanceKm && parseFloat(form.distanceKm) > 0);
+  const destinationRenseignee = Boolean(form.adresseDestination && form.adresseDestination.trim().length > 0);
+  const itinerairePret = distanceValide && destinationRenseignee;
+
+  const fraisLivraisonEstime = itinerairePret
+    ? (estimation?.montant || calculerFraisLivraisonLocal(form.distanceKm))
+    : null;
+  const totalGeneralEstime = fraisLivraisonEstime !== null ? sousTotalGaz + fraisLivraisonEstime : null;
 
   const champ = (nom) => (e) => {
     const val = e.target.value;
@@ -451,37 +458,59 @@ export default function ClientOrder() {
             </div>
 
             {/* Live Pricing Estimation Card */}
-            <div className="card p-4 shadow-card bg-gradient-to-br from-slate-900 to-emerald-950 text-white rounded-2xl space-y-2.5">
-              <div className="flex items-center justify-between text-xs text-emerald-200">
-                <span>
-                  {modeService === 'gaz'
-                    ? `${quantiteGaz}x ${bouteilleChoisie.label}`
-                    : 'Course Express'}
-                </span>
-                <span className="font-mono font-bold">
-                  {modeService === 'gaz' ? `${sousTotalGaz.toLocaleString('fr-FR')} FCFA` : '—'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-emerald-200">
-                <span className="flex items-center gap-1">
-                  <Truck className="w-3.5 h-3.5 text-emerald-400" />
+            {itinerairePret ? (
+              <div className="card p-4 shadow-card bg-gradient-to-br from-slate-900 to-emerald-950 text-white rounded-2xl space-y-2.5 animate-slide-up">
+                <div className="flex items-center justify-between text-xs text-emerald-200">
                   <span>
-                    Frais de livraison {form.distanceKm ? `(${form.distanceKm} km)` : ''}
+                    {modeService === 'gaz'
+                      ? `${quantiteGaz}x ${bouteilleChoisie.label}`
+                      : 'Course Express'}
                   </span>
-                </span>
-                <span className="font-mono font-bold">
-                  {fraisLivraisonEstime.toLocaleString('fr-FR')} FCFA
-                </span>
-              </div>
+                  <span className="font-mono font-bold">
+                    {modeService === 'gaz' ? `${sousTotalGaz.toLocaleString('fr-FR')} FCFA` : '—'}
+                  </span>
+                </div>
 
-              <div className="pt-2 border-t border-white/15 flex items-center justify-between">
-                <span className="font-display font-bold text-sm text-white">TOTAL À PAYER :</span>
-                <span className="font-display font-bold text-xl text-emerald-400">
-                  {totalGeneralEstime.toLocaleString('fr-FR')} FCFA
-                </span>
+                <div className="flex items-center justify-between text-xs text-emerald-200">
+                  <span className="flex items-center gap-1">
+                    <Truck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>
+                      Frais de livraison ({form.distanceKm} km depuis Djaradougou)
+                    </span>
+                  </span>
+                  <span className="font-mono font-bold">
+                    {fraisLivraisonEstime.toLocaleString('fr-FR')} FCFA
+                  </span>
+                </div>
+
+                <div className="pt-2 border-t border-white/15 flex items-center justify-between">
+                  <span className="font-display font-bold text-sm text-white">TOTAL À PAYER :</span>
+                  <span className="font-display font-bold text-xl text-emerald-400">
+                    {totalGeneralEstime.toLocaleString('fr-FR')} FCFA
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="card p-4 shadow-card bg-white border border-slate-200 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-800">
+                    {modeService === 'gaz' ? `🔥 ${quantiteGaz}x ${bouteilleChoisie.label}` : '📦 Course Express'}
+                  </span>
+                  <span className="font-mono font-bold text-slate-900">
+                    {modeService === 'gaz' ? `${sousTotalGaz.toLocaleString('fr-FR')} FCFA` : '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                  <span className="flex items-center gap-1 text-slate-500">
+                    <MapPin className="w-3.5 h-3.5 text-sahel" />
+                    <span>Frais de livraison :</span>
+                  </span>
+                  <span className="text-amber-800 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-md text-[11px] border border-amber-200/60">
+                    En attente de votre lieu (dès 1 000 F)
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Error banner */}
             {erreur && (

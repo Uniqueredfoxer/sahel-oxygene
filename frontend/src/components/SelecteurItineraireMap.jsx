@@ -592,45 +592,6 @@ export default function SelecteurItineraireMap({
         />
       </div>
 
-      {/* Real-time KPI Card */}
-      {distanceKm !== null && (
-        <div className="card p-4 shadow-card bg-gradient-to-br from-white to-emerald-50/40 border-emerald-200 animate-slide-up">
-          <div className="grid grid-cols-3 gap-3 text-center divide-x divide-emerald-100">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                Distance
-              </span>
-              <p className="font-display font-bold text-lg text-slate-900 mt-0.5">
-                {calculEnCours ? '…' : `${distanceKm} km`}
-              </p>
-            </div>
-
-            <div className="pl-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block flex items-center justify-center gap-1">
-                <Clock className="w-3 h-3 text-emerald-600" />
-                <span>Délai est.</span>
-              </span>
-              <p className="font-display font-bold text-lg text-slate-800 mt-0.5">
-                {calculEnCours ? '…' : dureeMinutes ? `~${dureeMinutes} min` : '—'}
-              </p>
-            </div>
-
-            <div className="pl-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block flex items-center justify-center gap-1">
-                <Coins className="w-3 h-3 text-sahel" />
-                <span>Tarif Livraison</span>
-              </span>
-              <p className="font-display font-bold text-lg text-sahel-dark font-mono mt-0.5">
-                {calculEnCours
-                  ? 'Calcul…'
-                  : montantEstime
-                  ? `${montantEstime.toLocaleString('fr-FR')} F`
-                  : '—'}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal / Pop-in pour Coller un lien Google Maps */}
       {modalGmaps && (
