@@ -574,7 +574,7 @@ export default function SelecteurItineraireMap({
           </div>
 
           <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-            {SECTEURS_BOBO.map((s) => {
+            {SECTEURS_BOBO.map((s, idx) => {
               const estSelectionne =
                 pointDest &&
                 Math.abs(pointDest.lat - s.lat) < 0.003 &&
@@ -582,7 +582,7 @@ export default function SelecteurItineraireMap({
 
               return (
                 <button
-                  key={s.id}
+                  key={`${s.nom}-${s.secteur}-${idx}`}
                   type="button"
                   onClick={() => appliquerSecteurBobo(s)}
                   className={`px-2.5 py-1 text-[11px] font-medium rounded-lg border transition-all flex items-center gap-1.5 ${

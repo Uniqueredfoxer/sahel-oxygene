@@ -24,16 +24,14 @@ export const SECTEURS_BOBO = [
   // ZONE 1 : 0 à 4 km (Tarif : 1 000 FCFA)
   // ==========================================
   {
-    id: 'secteur_2_djaradougou',
     nom: 'Djaradougou',
     secteur: 'Secteur 2',
     distanceKm: 0.8,
-    tarifFCFA: 1000,
+    tarifFCFA: 500,
     lat: 11.1850,
     lng: -4.2980,
   },
   {
-    id: 'secteur_1_dioulassoba',
     nom: 'Dioulassoba',
     secteur: 'Secteur 1',
     distanceKm: 1.2,
@@ -42,7 +40,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2955,
   },
   {
-    id: 'secteur_3_sikasso_cira',
     nom: 'Sikasso-Cira',
     secteur: 'Secteur 3',
     distanceKm: 1.5,
@@ -51,8 +48,7 @@ export const SECTEURS_BOBO = [
     lng: -4.2910,
   },
   {
-    id: 'secteur_1_grand_marche',
-    nom: 'Grand Marché / Centre-ville',
+    nom: 'Centre-ville',
     secteur: 'Secteur 1/3',
     distanceKm: 1.8,
     tarifFCFA: 1000,
@@ -60,7 +56,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2979,
   },
   {
-    id: 'secteur_7_colma',
     nom: 'Colma',
     secteur: 'Secteur 7',
     distanceKm: 1.9,
@@ -69,7 +64,6 @@ export const SECTEURS_BOBO = [
     lng: -4.3210,
   },
   {
-    id: 'secteur_3_koko',
     nom: 'Koko',
     secteur: 'Secteur 3',
     distanceKm: 2.2,
@@ -78,7 +72,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2850,
   },
   {
-    id: 'secteur_2_accart_ville',
     nom: 'Accart-Ville',
     secteur: 'Secteur 2',
     distanceKm: 2.3,
@@ -87,7 +80,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2882,
   },
   {
-    id: 'secteur_4_farakan',
     nom: 'Farakan',
     secteur: 'Secteur 4',
     distanceKm: 2.8,
@@ -96,7 +88,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2750,
   },
   {
-    id: 'secteur_1_tounouma',
     nom: 'Tounouma',
     secteur: 'Secteur 1',
     distanceKm: 3.1,
@@ -105,7 +96,6 @@ export const SECTEURS_BOBO = [
     lng: -4.3050,
   },
   {
-    id: 'secteur_10_dogona',
     nom: 'Dogona',
     secteur: 'Secteur 10',
     distanceKm: 3.5,
@@ -114,7 +104,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2790,
   },
   {
-    id: 'secteur_8_bindougousso',
     nom: 'Bindougousso',
     secteur: 'Secteur 8',
     distanceKm: 3.8,
@@ -122,12 +111,26 @@ export const SECTEURS_BOBO = [
     lat: 11.1920,
     lng: -4.3120,
   },
-
+  {
+    nom: 'Secteur 22',
+    secteur: 'Secteur 22',
+    distanceKm: 3.8,
+    tarifFCFA: 1000,
+    lat: 11.1920,
+    lng: -4.3120,
+  },
+  {
+    nom: 'Yeguere',
+    secteur: 'Secteur 22',
+    distanceKm: 3.8,
+    tarifFCFA: 1000,
+    lat: 11.1920,
+    lng: -4.3120,
+  },
   // ==========================================
   // ZONE 2 : 4 à 8 km (Tarif : 1 500 FCFA)
   // ==========================================
   {
-    id: 'secteur_11_zone_industrielle',
     nom: 'Zone Industrielle',
     secteur: 'Secteur 11',
     distanceKm: 4.2,
@@ -136,7 +139,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2680,
   },
   {
-    id: 'secteur_5_kuinima',
     nom: 'Kuinima',
     secteur: 'Secteur 5',
     distanceKm: 4.5,
@@ -145,34 +147,31 @@ export const SECTEURS_BOBO = [
     lng: -4.3050,
   },
   {
-    id: 'secteur_6_belleville',
     nom: 'Belleville',
-    secteur: 'Secteur 6',
+    secteur: 'Secteur 29',
     distanceKm: 4.8,
     tarifFCFA: 1500,
     lat: 11.1980,
     lng: -4.2890,
   },
+  
   {
-    id: 'secteur_9_bolomakote',
-    nom: 'Bolomakoté',
-    secteur: 'Secteur 9',
-    distanceKm: 4.9,
-    tarifFCFA: 1500,
-    lat: 11.1600,
-    lng: -4.2920,
-  },
-  {
-    id: 'secteur_29_kuinima_ouest',
-    nom: 'Kuinima Ouest',
-    secteur: 'Secteur 29',
+    nom: 'Secteur 24',
+    secteur: 'Secteur 24',
     distanceKm: 5.2,
     tarifFCFA: 1500,
     lat: 11.1580,
     lng: -4.3150,
   },
   {
-    id: 'secteur_15_ouezzin_ville',
+    nom: 'Secteur 25',
+    secteur: 'Secteur 25',
+    distanceKm: 5.2,
+    tarifFCFA: 1500,
+    lat: 11.1580,
+    lng: -4.3150,
+  },
+  {
     nom: 'Ouezzin-Ville',
     secteur: 'Secteur 15',
     distanceKm: 5.5,
@@ -181,16 +180,14 @@ export const SECTEURS_BOBO = [
     lng: -4.3080,
   },
   {
-    id: 'secteur_22_yeguere',
-    nom: 'Yéguéré / Bobo 2010',
-    secteur: 'Secteur 22',
+    nom: 'Yéguéré',
+    secteur: '',
     distanceKm: 5.8,
     tarifFCFA: 1500,
     lat: 11.2120,
     lng: -4.2750,
   },
   {
-    id: 'secteur_17_sarfalao',
     nom: 'Sarfalao',
     secteur: 'Secteur 17',
     distanceKm: 6.2,
@@ -199,7 +196,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2820,
   },
   {
-    id: 'secteur_23_logofourousso',
     nom: 'Logofourousso / Belleville Nord',
     secteur: 'Secteur 23',
     distanceKm: 6.5,
@@ -208,7 +204,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2950,
   },
   {
-    id: 'secteur_20_lafiabougou',
     nom: 'Lafiabougou',
     secteur: 'Secteur 20',
     distanceKm: 6.8,
@@ -217,7 +212,6 @@ export const SECTEURS_BOBO = [
     lng: -4.3210,
   },
   {
-    id: 'secteur_21_kodeni',
     nom: 'Kodéni',
     secteur: 'Secteur 21',
     distanceKm: 7.5,
@@ -226,7 +220,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2950,
   },
   {
-    id: 'secteur_32_lafiabougou_sud',
     nom: 'Lafiabougou Sud',
     secteur: 'Secteur 32',
     distanceKm: 7.8,
@@ -239,7 +232,6 @@ export const SECTEURS_BOBO = [
   // ZONE 3 : Plus de 8 km (1 500 FCFA + 100 F/km)
   // ==========================================
   {
-    id: 'secteur_33_pala',
     nom: 'Pala / Ouezzin Nord',
     secteur: 'Secteur 33',
     distanceKm: 8.2,
@@ -248,7 +240,6 @@ export const SECTEURS_BOBO = [
     lng: -4.3200,
   },
   {
-    id: 'secteur_18_dafra',
     nom: 'Dafra / Faladiè',
     secteur: 'Secteur 18',
     distanceKm: 8.5,
@@ -257,7 +248,6 @@ export const SECTEURS_BOBO = [
     lng: -4.3180,
   },
   {
-    id: 'secteur_31_dafra_sud',
     nom: 'Dafra Extension',
     secteur: 'Secteur 31',
     distanceKm: 9.0,
@@ -266,7 +256,6 @@ export const SECTEURS_BOBO = [
     lng: -4.3100,
   },
   {
-    id: 'secteur_25_darsalamy',
     nom: 'Darsalamy / Route Banfora',
     secteur: 'Secteur 25',
     distanceKm: 9.5,
@@ -275,7 +264,6 @@ export const SECTEURS_BOBO = [
     lng: -4.3400,
   },
   {
-    id: 'secteur_24_samagan',
     nom: 'Samagan / Route Nasso',
     secteur: 'Secteur 24',
     distanceKm: 10.2,
@@ -284,7 +272,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2850,
   },
   {
-    id: 'secteur_26_borodougou',
     nom: 'Borodougou',
     secteur: 'Secteur 26',
     distanceKm: 11.0,
@@ -293,7 +280,6 @@ export const SECTEURS_BOBO = [
     lng: -4.2650,
   },
   {
-    id: 'secteur_30_matourkou',
     nom: 'Matourkou',
     secteur: 'Secteur 30',
     distanceKm: 12.5,
@@ -302,7 +288,6 @@ export const SECTEURS_BOBO = [
     lng: -4.3550,
   },
   {
-    id: 'nasso_guinguette',
     nom: 'Nasso (Guinguette)',
     secteur: 'Périphérie',
     distanceKm: 15.0,
@@ -333,8 +318,7 @@ export function trouverSecteur(nomOuSecteur) {
     SECTEURS_BOBO.find(
       (s) =>
         s.nom.toLowerCase().includes(q) ||
-        s.secteur.toLowerCase().includes(q) ||
-        s.id.toLowerCase().includes(q)
+        s.secteur.toLowerCase().includes(q)
     ) || null
   );
 }
