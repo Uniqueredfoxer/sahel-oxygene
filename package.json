@@ -1,0 +1,13 @@
+{
+  "name": "sahel-oxygene",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=frontend",
+    "start": "npm start --workspace=backend"
+  }
+}
