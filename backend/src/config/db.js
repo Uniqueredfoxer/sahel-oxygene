@@ -5,17 +5,15 @@ dotenv.config();
 
 /**
  * Database Configuration
- * Supports both local PostgreSQL and Supabase
+ * Supports local PostgreSQL, Neon Serverless Postgres, and Supabase
  * 
- * For Supabase:
- * - Get credentials from: https://supabase.com/dashboard/project/YOUR_PROJECT_ID/settings/database
- * - DATABASE_URL format: postgresql://postgres:password@db.xxxx.supabase.co:5432/postgres
+ * DATABASE_URL format: postgresql://user:password@host:5432/dbname?sslmode=require
  */
 
 const dbUrl = process.env.DATABASE_URL || process.env.DB_URL;
 const host = process.env.DB_HOST || '';
-const isSupabase = dbUrl?.includes('supabase.') || host.includes('supabase.');
-const useSsl = process.env.NODE_ENV === 'production' || isSupabase || process.env.DB_SSL === 'true';
+const isCloudDb = dbUrl?.includes('neon.tech') || dbUrl?.includes('supabase.') || host.includes('neon.tech') || host.includes('supabase.');
+const useSsl = process.env.NODE_ENV === 'production' || isCloudDb || process.env.DB_SSL === 'true';
 
 const sequelizeOptions = {
   dialect: 'postgres',
