@@ -597,7 +597,7 @@ export default function ClientOrder() {
 
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5 block">
-                    Numéro de téléphone WhatsApp
+                    Numéro WhatsApp
                   </label>
                   <div className="relative">
                     <input
