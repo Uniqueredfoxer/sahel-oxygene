@@ -5,7 +5,7 @@ let socket = null;
 function getSocketBaseUrl() {
   const configured = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
   if (configured) return configured.replace(/\/$/, '');
-  return window.location.origin;
+  return import.meta.env.PROD ? 'https://sahel-oxygene.onrender.com' : window.location.origin;
 }
 
 export function getSocket() {
