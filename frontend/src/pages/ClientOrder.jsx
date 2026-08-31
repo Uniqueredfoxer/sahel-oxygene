@@ -21,6 +21,7 @@ import {
   Check,
   Receipt,
   Truck,
+  Tag,
 } from 'lucide-react';
 import api, { messageErreur } from '../api/client';
 import Logo from '../components/Logo';
@@ -33,13 +34,22 @@ const ETAPES = [
   { id: 2, titre: 'Confirmation', Icon: CheckCircle2 },
 ];
 
+const MARQUES_GAZ = [
+  { id: 'sodigaz', label: 'Sodigaz' },
+  { id: 'total', label: 'TotalEnergies' },
+  { id: 'oryx', label: 'Oryx Energies' },
+  { id: 'shell', label: 'Shell / Vivo' },
+  { id: 'petrofa', label: 'Petrofa' },
+  { id: 'autre', label: 'Autre / Indifférent' },
+];
+
 const TYPES_BOUTEILLES = [
   {
     id: 'recharge_6kg',
     label: 'Recharge 6 kg (B6)',
     desc: 'Échange standard bouteille vide contre pleine',
     prixUnitaire: 2000,
-    badge: 'Populaire',
+    badge: 'petite bouteille',
     capacite: '6 kg',
   },
   {
@@ -47,21 +57,21 @@ const TYPES_BOUTEILLES = [
     label: 'Recharge 12.5 kg (B12)',
     desc: 'Grand format pour ménages et cuisine',
     prixUnitaire: 5500,
-    badge: 'Économique',
+    badge: 'grande bouteille',
     capacite: '12.5 kg',
   },
   {
     id: 'complete_6kg',
     label: 'Complète 6 kg (Bouteille + Gaz)',
     desc: 'Bouteille consignée neuve + première charge',
-    prixUnitaire: 15000,
+    prixUnitaire: 27000,
     capacite: '6 kg',
   },
   {
     id: 'complete_12kg',
     label: 'Complète 12.5 kg (Bouteille + Gaz)',
     desc: 'Bouteille consignée neuve + première charge',
-    prixUnitaire: 25000,
+    prixUnitaire: 55500,
     capacite: '12.5 kg',
   },
 ];
@@ -76,6 +86,7 @@ function calculerFraisLivraisonLocal(distKm) {
 
 export default function ClientOrder() {
   const [modeService, setModeService] = useState('gaz'); // 'gaz' | 'course'
+  const [marqueGaz, setMarqueGaz] = useState('sodigaz');
   const [typeBouteille, setTypeBouteille] = useState('recharge_6kg');
   const [quantiteGaz, setQuantiteGaz] = useState(1);
   const [descriptionColis, setDescriptionColis] = useState('');
@@ -102,8 +113,9 @@ export default function ClientOrder() {
   const toast = useToast();
 
   const bouteilleChoisie = TYPES_BOUTEILLES.find((b) => b.id === typeBouteille) || TYPES_BOUTEILLES[0];
+  const marqueChoisie = MARQUES_GAZ.find((m) => m.id === marqueGaz) || MARQUES_GAZ[0];
   const sousTotalGaz = modeService === 'gaz' ? bouteilleChoisie.prixUnitaire * quantiteGaz : 0;
-  
+
   const distanceValide = Boolean(form.distanceKm && parseFloat(form.distanceKm) > 0);
   const destinationRenseignee = Boolean(form.adresseDestination && form.adresseDestination.trim().length > 0);
   const itinerairePret = distanceValide && destinationRenseignee;
@@ -178,10 +190,10 @@ export default function ClientOrder() {
 
     const detailArticle =
       modeService === 'gaz'
-        ? `${quantiteGaz}x ${bouteilleChoisie.label} (${sousTotalGaz.toLocaleString('fr-FR')} FCFA)`
+        ? `${quantiteGaz}x ${bouteilleChoisie.label} [Marque: ${marqueChoisie.label}]`
         : descriptionColis || 'Course Personnalisée';
 
-    const montantTotal = (modeService === 'gaz' ? sousTotalGaz : 0) + (estimation?.montant || fraisLivraisonEstime);
+    const montantTotal = (modeService === 'gaz' ? sousTotalGaz : 0) + (estimation?.montant || fraisLivraisonEstime || 1000);
 
     const payload = {
       ...form,
@@ -195,10 +207,11 @@ export default function ClientOrder() {
         ...data,
         detailArticle,
         sousTotalGaz,
-        fraisLivraison: estimation?.montant || fraisLivraisonEstime,
+        fraisLivraison: estimation?.montant || fraisLivraisonEstime || 1000,
         totalGeneral: montantTotal,
         quantiteGaz,
         nomBouteille: bouteilleChoisie.label,
+        nomMarque: marqueChoisie.label,
       });
       setEtape(2);
       toast.succes('Commande enregistrée avec succès !');
@@ -314,57 +327,89 @@ export default function ClientOrder() {
 
             {/* Bouteille Selector (Gas Mode) */}
             {modeService === 'gaz' && (
-              <div className="card p-5 shadow-card space-y-3.5 bg-white border-slate-200">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-display font-bold text-sm text-slate-900 flex items-center gap-1.5">
-                    <Flame className="w-4 h-4 text-sahel" />
-                    <span>Sélectionnez votre bouteille</span>
-                  </h2>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                    Dépôt Djaradougou
-                  </span>
+              <div className="card p-5 shadow-card space-y-4 bg-white border-slate-200">
+                {/* 1. Sélection de la Marque */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="font-display font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                      <Tag className="w-3.5 h-3.5 text-sahel" />
+                      <span>1. Marque / Modèle de votre bouteille</span>
+                    </h2>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      Dépôt Djaradougou
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {MARQUES_GAZ.map((m) => {
+                      const estChoisi = marqueGaz === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setMarqueGaz(m.id)}
+                          className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border text-center flex flex-col items-center justify-center gap-0.5 ${
+                            estChoisi
+                              ? 'border-sahel bg-emerald-50 text-sahel-dark ring-2 ring-sahel/30 shadow-xs'
+                              : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+                          }`}
+                        >
+                          <span className="truncate w-full">{m.label}</span>
+                          {estChoisi && <Check className="w-3 h-3 text-sahel" />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {TYPES_BOUTEILLES.map((b) => {
-                    const estChoisi = typeBouteille === b.id;
-                    return (
-                      <div
-                        key={b.id}
-                        onClick={() => setTypeBouteille(b.id)}
-                        className={`cursor-pointer p-3 rounded-xl border transition-all relative ${
-                          estChoisi
-                            ? 'border-sahel bg-emerald-50/50 ring-2 ring-sahel/20 shadow-xs'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        {b.badge && (
-                          <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
-                            {b.badge}
-                          </span>
-                        )}
-                        <div className="flex items-start gap-2">
-                          <div
-                            className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
-                              estChoisi ? 'border-sahel bg-sahel text-white' : 'border-slate-300'
-                            }`}
-                          >
-                            {estChoisi && <Check className="w-2.5 h-2.5" />}
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-slate-900 leading-snug">{b.label}</p>
-                            <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{b.desc}</p>
-                            <p className="text-xs font-mono font-bold text-sahel-dark mt-1">
-                              {b.prixUnitaire.toLocaleString('fr-FR')} FCFA
-                            </p>
+                {/* 2. Format / Type de bouteille */}
+                <div className="pt-2 border-t border-slate-100">
+                  <h3 className="font-display font-bold text-xs uppercase tracking-wider text-slate-800 mb-2 flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-sahel" />
+                    <span>2. Format de bouteille</span>
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {TYPES_BOUTEILLES.map((b) => {
+                      const estChoisi = typeBouteille === b.id;
+                      return (
+                        <div
+                          key={b.id}
+                          onClick={() => setTypeBouteille(b.id)}
+                          className={`cursor-pointer p-3 rounded-xl border transition-all relative ${
+                            estChoisi
+                              ? 'border-sahel bg-emerald-50/50 ring-2 ring-sahel/20 shadow-xs'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          {b.badge && (
+                            <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                              {b.badge}
+                            </span>
+                          )}
+                          <div className="flex items-start gap-2">
+                            <div
+                              className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
+                                estChoisi ? 'border-sahel bg-sahel text-white' : 'border-slate-300'
+                              }`}
+                            >
+                              {estChoisi && <Check className="w-2.5 h-2.5" />}
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-900 leading-snug">{b.label}</p>
+                              <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{b.desc}</p>
+                              <p className="text-xs font-mono font-bold text-sahel-dark mt-1">
+                                {b.prixUnitaire.toLocaleString('fr-FR')} FCFA
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Quantity counter */}
+                {/* 3. Quantité */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                   <span className="text-xs font-semibold text-slate-700">Nombre de bouteilles :</span>
                   <div className="flex items-center gap-3 bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -463,7 +508,7 @@ export default function ClientOrder() {
                 <div className="flex items-center justify-between text-xs text-emerald-200">
                   <span>
                     {modeService === 'gaz'
-                      ? `${quantiteGaz}x ${bouteilleChoisie.label}`
+                      ? `${quantiteGaz}x ${bouteilleChoisie.label} (${marqueChoisie.label})`
                       : 'Course Express'}
                   </span>
                   <span className="font-mono font-bold">
@@ -494,7 +539,9 @@ export default function ClientOrder() {
               <div className="card p-4 shadow-card bg-white border border-slate-200 rounded-2xl space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-800">
-                    {modeService === 'gaz' ? `🔥 ${quantiteGaz}x ${bouteilleChoisie.label}` : '📦 Course Express'}
+                    {modeService === 'gaz'
+                      ? `🔥 ${quantiteGaz}x ${bouteilleChoisie.label} (${marqueChoisie.label})`
+                      : '📦 Course Express'}
                   </span>
                   <span className="font-mono font-bold text-slate-900">
                     {modeService === 'gaz' ? `${sousTotalGaz.toLocaleString('fr-FR')} FCFA` : '—'}
@@ -556,17 +603,25 @@ export default function ClientOrder() {
                   <span className="font-semibold text-slate-700">Article :</span>
                   <span className="font-bold text-emerald-800">
                     {modeService === 'gaz'
-                      ? `🔥 ${quantiteGaz}x ${bouteilleChoisie.label}`
+                      ? `🔥 ${quantiteGaz}x ${bouteilleChoisie.label} — ${marqueChoisie.label}`
                       : '📦 Course Express / Colis'}
                   </span>
                 </div>
                 {modeService === 'gaz' && (
-                  <div className="flex items-center justify-between text-slate-600">
-                    <span>Prix unitaire bouteille :</span>
-                    <span className="font-mono font-semibold">
-                      {bouteilleChoisie.prixUnitaire.toLocaleString('fr-FR')} FCFA
-                    </span>
-                  </div>
+                  <>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Marque sélectionnée :</span>
+                      <span className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {marqueChoisie.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-600">
+                      <span>Prix unitaire bouteille :</span>
+                      <span className="font-mono font-semibold">
+                        {bouteilleChoisie.prixUnitaire.toLocaleString('fr-FR')} FCFA
+                      </span>
+                    </div>
+                  </>
                 )}
                 {modeService === 'course' && descriptionColis && (
                   <div className="flex items-center justify-between text-slate-600">
@@ -616,7 +671,7 @@ export default function ClientOrder() {
               <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 to-emerald-950 text-white space-y-2 shadow-md">
                 {modeService === 'gaz' && (
                   <div className="flex items-center justify-between text-xs text-emerald-200">
-                    <span>Gaz ({quantiteGaz}x bouteille)</span>
+                    <span>Gaz ({quantiteGaz}x {marqueChoisie.label})</span>
                     <span className="font-mono font-semibold">{sousTotalGaz.toLocaleString('fr-FR')} FCFA</span>
                   </div>
                 )}
@@ -625,13 +680,13 @@ export default function ClientOrder() {
                     Frais de livraison ({estimation?.distanceKm || form.distanceKm} km)
                   </span>
                   <span className="font-mono font-semibold">
-                    {(estimation?.montant || fraisLivraisonEstime).toLocaleString('fr-FR')} FCFA
+                    {(estimation?.montant || fraisLivraisonEstime || 1000).toLocaleString('fr-FR')} FCFA
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-white/15">
                   <span className="text-sm font-bold">TOTAL À PAYER</span>
                   <span className="font-display text-2xl font-bold text-emerald-400">
-                    {((modeService === 'gaz' ? sousTotalGaz : 0) + (estimation?.montant || fraisLivraisonEstime)).toLocaleString('fr-FR')} FCFA
+                    {((modeService === 'gaz' ? sousTotalGaz : 0) + (estimation?.montant || fraisLivraisonEstime || 1000)).toLocaleString('fr-FR')} FCFA
                   </span>
                 </div>
               </div>
