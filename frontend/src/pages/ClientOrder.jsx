@@ -38,11 +38,11 @@ const ETAPES = [
 
 const MARQUES_GAZ = [
   { id: 'sodigaz', label: 'Sodigaz' },
-  { id: 'total', label: 'TotalEnergies' },
-  { id: 'oryx', label: 'Oryx Energies' },
-  { id: 'shell', label: 'Shell / Vivo' },
+  { id: 'total', label: 'Total' },
+  { id: 'oryx', label: 'Oryx' },
+  { id: 'shell', label: 'Shell' },
   { id: 'petrofa', label: 'Petrofa' },
-  { id: 'autre', label: 'Autre / Indifférent' },
+  { id: 'autre', label: 'Autre' },
 ];
 
 const TYPES_BOUTEILLES = [
@@ -665,7 +665,7 @@ export default function ClientOrder() {
                     <span>Frais de livraison :</span>
                   </span>
                   <span className="text-amber-800 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-md text-[11px] border border-amber-200/60">
-                    En attente de votre lieu (dès 1 000 F)
+                    En attente de votre lieu
                   </span>
                 </div>
               </div>
