@@ -1,29 +1,5 @@
 import dotenv from 'dotenv';
-import { Sequelize } from 'sequelize';
-
-dotenv.config();
-
-console.log('🔍 Testing Supabase/PostgreSQL Database Connection...\n');
-
-const sequelize = new Sequelize(
-  process.env.DB_NAME || 'postgres',
-  process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    dialect: 'postgres',
-    logging: false,
-    ...(process.env.NODE_ENV === 'production' && {
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        },
-      },
-    }),
-  }
-);
+import sequelize from '../src/config/db.js';
 
 (async () => {
   try {
