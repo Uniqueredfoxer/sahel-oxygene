@@ -19,6 +19,8 @@ import {
   Plus,
   Minus,
   Check,
+  Receipt,
+  Truck,
 } from 'lucide-react';
 import api, { messageErreur } from '../api/client';
 import Logo from '../components/Logo';
@@ -36,6 +38,7 @@ const TYPES_BOUTEILLES = [
     id: 'recharge_6kg',
     label: 'Recharge 6 kg (B6)',
     desc: 'Échange standard bouteille vide contre pleine',
+    prixUnitaire: 2000,
     badge: 'Populaire',
     capacite: '6 kg',
   },
@@ -43,22 +46,33 @@ const TYPES_BOUTEILLES = [
     id: 'recharge_12kg',
     label: 'Recharge 12.5 kg (B12)',
     desc: 'Grand format pour ménages et cuisine',
+    prixUnitaire: 5500,
     badge: 'Économique',
     capacite: '12.5 kg',
   },
   {
     id: 'complete_6kg',
     label: 'Complète 6 kg (Bouteille + Gaz)',
-    desc: 'Nouvelle bouteille neuve consignée + charge gaz',
+    desc: 'Bouteille consignée neuve + première charge',
+    prixUnitaire: 15000,
     capacite: '6 kg',
   },
   {
     id: 'complete_12kg',
     label: 'Complète 12.5 kg (Bouteille + Gaz)',
-    desc: 'Nouvelle bouteille neuve consignée + charge gaz',
+    desc: 'Bouteille consignée neuve + première charge',
+    prixUnitaire: 25000,
     capacite: '12.5 kg',
   },
 ];
+
+function calculerFraisLivraisonLocal(distKm) {
+  const d = parseFloat(distKm);
+  if (Number.isNaN(d) || d <= 0) return 1000;
+  if (d <= 4) return 1000;
+  if (d <= 8) return 1500;
+  return 1500 + Math.ceil(d - 8) * 100;
+}
 
 export default function ClientOrder() {
   const [modeService, setModeService] = useState('gaz'); // 'gaz' | 'course'
@@ -70,10 +84,10 @@ export default function ClientOrder() {
   const [form, setForm] = useState({
     clientNom: '',
     clientTelephone: '',
-    adresseDepart: 'Dépôt SAHEL OXYGENE (Bobo-Dioulasso)',
+    adresseDepart: 'Dépôt SAHEL OXYGENE (Djaradougou, Bobo-Dioulasso)',
     adresseDestination: '',
-    departLat: 11.1772,
-    departLng: -4.2979,
+    departLat: 11.1850,
+    departLng: -4.2980,
     destinationLat: null,
     destinationLng: null,
     distanceKm: '',
@@ -86,6 +100,11 @@ export default function ClientOrder() {
   const [modeManuel, setModeManuel] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
+
+  const bouteilleChoisie = TYPES_BOUTEILLES.find((b) => b.id === typeBouteille) || TYPES_BOUTEILLES[0];
+  const sousTotalGaz = modeService === 'gaz' ? bouteilleChoisie.prixUnitaire * quantiteGaz : 0;
+  const fraisLivraisonEstime = estimation?.montant || (form.distanceKm ? calculerFraisLivraisonLocal(form.distanceKm) : 1000);
+  const totalGeneralEstime = sousTotalGaz + fraisLivraisonEstime;
 
   const champ = (nom) => (e) => {
     const val = e.target.value;
@@ -150,20 +169,30 @@ export default function ClientOrder() {
     setChargement(true);
     setErreur('');
 
-    const bouteilleChoisie = TYPES_BOUTEILLES.find((b) => b.id === typeBouteille);
     const detailArticle =
       modeService === 'gaz'
-        ? `${quantiteGaz}x ${bouteilleChoisie?.label || 'Bouteille de Gaz'}`
+        ? `${quantiteGaz}x ${bouteilleChoisie.label} (${sousTotalGaz.toLocaleString('fr-FR')} FCFA)`
         : descriptionColis || 'Course Personnalisée';
+
+    const montantTotal = (modeService === 'gaz' ? sousTotalGaz : 0) + (estimation?.montant || fraisLivraisonEstime);
 
     const payload = {
       ...form,
+      montant: montantTotal,
       clientNom: form.clientNom ? `${form.clientNom} [${detailArticle}]` : `[${detailArticle}]`,
     };
 
     try {
       const { data } = await api.post('/public/livraisons', payload);
-      setResultat({ ...data, detailArticle, quantiteGaz });
+      setResultat({
+        ...data,
+        detailArticle,
+        sousTotalGaz,
+        fraisLivraison: estimation?.montant || fraisLivraisonEstime,
+        totalGeneral: montantTotal,
+        quantiteGaz,
+        nomBouteille: bouteilleChoisie.label,
+      });
       setEtape(2);
       toast.succes('Commande enregistrée avec succès !');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -247,9 +276,9 @@ export default function ClientOrder() {
                   setModeService('gaz');
                   setForm((f) => ({
                     ...f,
-                    adresseDepart: 'Dépôt SAHEL OXYGENE (Bobo-Dioulasso)',
-                    departLat: 11.1772,
-                    departLng: -4.2979,
+                    adresseDepart: 'Dépôt SAHEL OXYGENE (Djaradougou, Bobo-Dioulasso)',
+                    departLat: 11.1850,
+                    departLng: -4.2980,
                   }));
                 }}
                 className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
@@ -285,7 +314,7 @@ export default function ClientOrder() {
                     <span>Sélectionnez votre bouteille</span>
                   </h2>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                    Bobo-Dioulasso & Ouaga
+                    Dépôt Djaradougou
                   </span>
                 </div>
 
@@ -309,7 +338,7 @@ export default function ClientOrder() {
                         )}
                         <div className="flex items-start gap-2">
                           <div
-                            className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center ${
+                            className={`w-4 h-4 rounded-full border mt-0.5 flex items-center justify-center shrink-0 ${
                               estChoisi ? 'border-sahel bg-sahel text-white' : 'border-slate-300'
                             }`}
                           >
@@ -318,6 +347,9 @@ export default function ClientOrder() {
                           <div>
                             <p className="text-xs font-bold text-slate-900 leading-snug">{b.label}</p>
                             <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{b.desc}</p>
+                            <p className="text-xs font-mono font-bold text-sahel-dark mt-1">
+                              {b.prixUnitaire.toLocaleString('fr-FR')} FCFA
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -418,6 +450,39 @@ export default function ClientOrder() {
               </div>
             </div>
 
+            {/* Live Pricing Estimation Card */}
+            <div className="card p-4 shadow-card bg-gradient-to-br from-slate-900 to-emerald-950 text-white rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between text-xs text-emerald-200">
+                <span>
+                  {modeService === 'gaz'
+                    ? `${quantiteGaz}x ${bouteilleChoisie.label}`
+                    : 'Course Express'}
+                </span>
+                <span className="font-mono font-bold">
+                  {modeService === 'gaz' ? `${sousTotalGaz.toLocaleString('fr-FR')} FCFA` : '—'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-emerald-200">
+                <span className="flex items-center gap-1">
+                  <Truck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>
+                    Frais de livraison {form.distanceKm ? `(${form.distanceKm} km)` : ''}
+                  </span>
+                </span>
+                <span className="font-mono font-bold">
+                  {fraisLivraisonEstime.toLocaleString('fr-FR')} FCFA
+                </span>
+              </div>
+
+              <div className="pt-2 border-t border-white/15 flex items-center justify-between">
+                <span className="font-display font-bold text-sm text-white">TOTAL À PAYER :</span>
+                <span className="font-display font-bold text-xl text-emerald-400">
+                  {totalGeneralEstime.toLocaleString('fr-FR')} FCFA
+                </span>
+              </div>
+            </div>
+
             {/* Error banner */}
             {erreur && (
               <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
@@ -439,7 +504,7 @@ export default function ClientOrder() {
                 </>
               ) : (
                 <>
-                  <span>Voir le récapitulatif & tarif</span>
+                  <span>Voir le récapitulatif & Valider</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -453,21 +518,29 @@ export default function ClientOrder() {
             <div className="card p-6 shadow-card space-y-4 bg-white border-slate-200">
               <h2 className="font-display text-xl font-bold text-slate-900 flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-sahel" />
-                <span>Récapitulatif de la commande</span>
+                <span>Détail de votre commande</span>
               </h2>
 
               {/* Service Details */}
-              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-2">
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700">Type de service :</span>
-                  <span className="text-xs font-bold text-emerald-800">
+                  <span className="font-semibold text-slate-700">Article :</span>
+                  <span className="font-bold text-emerald-800">
                     {modeService === 'gaz'
-                      ? `🔥 ${quantiteGaz}x ${TYPES_BOUTEILLES.find((b) => b.id === typeBouteille)?.label}`
+                      ? `🔥 ${quantiteGaz}x ${bouteilleChoisie.label}`
                       : '📦 Course Express / Colis'}
                   </span>
                 </div>
+                {modeService === 'gaz' && (
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>Prix unitaire bouteille :</span>
+                    <span className="font-mono font-semibold">
+                      {bouteilleChoisie.prixUnitaire.toLocaleString('fr-FR')} FCFA
+                    </span>
+                  </div>
+                )}
                 {modeService === 'course' && descriptionColis && (
-                  <div className="flex items-center justify-between text-xs text-slate-600">
+                  <div className="flex items-center justify-between text-slate-600">
                     <span>Colis :</span>
                     <span className="font-medium">{descriptionColis}</span>
                   </div>
@@ -482,7 +555,7 @@ export default function ClientOrder() {
                   </div>
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                      Départ
+                      Départ (Dépôt)
                     </span>
                     <p className="text-xs font-semibold text-slate-800">{form.adresseDepart}</p>
                   </div>
@@ -510,21 +583,29 @@ export default function ClientOrder() {
                 </span>
               </div>
 
-              {/* Tarif Total Card */}
-              {estimation && (
-                <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 to-emerald-950 text-white space-y-1 shadow-md">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-emerald-200">Distance routière</span>
-                    <span className="text-xs font-mono font-semibold">{estimation.distanceKm} km</span>
+              {/* Detailed Price Breakdown */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 to-emerald-950 text-white space-y-2 shadow-md">
+                {modeService === 'gaz' && (
+                  <div className="flex items-center justify-between text-xs text-emerald-200">
+                    <span>Gaz ({quantiteGaz}x bouteille)</span>
+                    <span className="font-mono font-semibold">{sousTotalGaz.toLocaleString('fr-FR')} FCFA</span>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                    <span className="text-sm font-bold">Frais de livraison</span>
-                    <span className="font-display text-2xl font-bold text-emerald-400">
-                      {estimation.montant?.toLocaleString('fr-FR')} FCFA
-                    </span>
-                  </div>
+                )}
+                <div className="flex items-center justify-between text-xs text-emerald-200">
+                  <span>
+                    Frais de livraison ({estimation?.distanceKm || form.distanceKm} km)
+                  </span>
+                  <span className="font-mono font-semibold">
+                    {(estimation?.montant || fraisLivraisonEstime).toLocaleString('fr-FR')} FCFA
+                  </span>
                 </div>
-              )}
+                <div className="flex items-center justify-between pt-2 border-t border-white/15">
+                  <span className="text-sm font-bold">TOTAL À PAYER</span>
+                  <span className="font-display text-2xl font-bold text-emerald-400">
+                    {((modeService === 'gaz' ? sousTotalGaz : 0) + (estimation?.montant || fraisLivraisonEstime)).toLocaleString('fr-FR')} FCFA
+                  </span>
+                </div>
+              </div>
             </div>
 
             {erreur && (
@@ -574,7 +655,7 @@ export default function ClientOrder() {
             </div>
 
             <div>
-              <h2 className="font-display text-2xl font-bold text-slate-900">Commande Confirmée !</h2>
+              <h2 className="font-display text-2xl font-bold text-slate-900">Commande Enregistrée !</h2>
               <p className="text-xs text-slate-500 mt-1">
                 Numéro de suivi :{' '}
                 <span className="font-mono font-bold text-sahel-dark bg-emerald-50 px-2 py-0.5 rounded">
@@ -585,7 +666,7 @@ export default function ClientOrder() {
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">Service :</span>
+                <span className="text-slate-500">Article :</span>
                 <span className="font-semibold text-slate-800">{resultat.detailArticle}</span>
               </div>
               <div className="flex justify-between">
@@ -594,9 +675,17 @@ export default function ClientOrder() {
                   {resultat.livraison?.adresseDestination}
                 </span>
               </div>
-              <div className="flex justify-between pt-1 border-t border-slate-200">
-                <span className="text-slate-500">Montant de la livraison :</span>
-                <span className="font-bold text-sahel-dark">{resultat.livraison?.montant} FCFA</span>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Frais de livraison :</span>
+                <span className="font-mono font-semibold text-slate-700">
+                  {resultat.fraisLivraison?.toLocaleString('fr-FR')} FCFA
+                </span>
+              </div>
+              <div className="flex justify-between pt-1.5 border-t border-slate-200 font-bold">
+                <span className="text-slate-900">TOTAL À PAYER :</span>
+                <span className="text-sahel-dark font-display text-base">
+                  {resultat.totalGeneral?.toLocaleString('fr-FR')} FCFA
+                </span>
               </div>
             </div>
 

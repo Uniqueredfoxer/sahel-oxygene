@@ -56,6 +56,8 @@ const iconeDestination = creerIconeMarker('📍', '#1E293B'); // Charbon foncé
 const iconeDepot = creerIconeMarker('🏭', '#047857'); // Dépôt Vert
 
 const QUARTIERS_RAPIDES = [
+  { nom: 'Djaradougou (Dépôt)', lat: 11.1850, lng: -4.2980 },
+  { nom: 'Sikasso-Cira', lat: 11.1790, lng: -4.2910 },
   { nom: 'Grand Marché (Bobo)', lat: 11.1772, lng: -4.2979 },
   { nom: 'Accart-Ville', lat: 11.1685, lng: -4.2882 },
   { nom: 'Bindougousso', lat: 11.1920, lng: -4.3120 },
@@ -80,12 +82,12 @@ export default function SelecteurItineraireMap({
   // Coordonnées et adresses
   const [pointDepart, setPointDepart] = useState(
     estModeGaz
-      ? { lat: CENTRE_DEFAUT.lat, lng: CENTRE_DEFAUT.lng, label: 'Dépôt SAHEL OXYGENE (Bobo-Dioulasso)' }
+      ? { lat: CENTRE_DEFAUT.lat, lng: CENTRE_DEFAUT.lng, label: 'Dépôt SAHEL OXYGENE (Djaradougou, Bobo-Dioulasso)' }
       : null
   );
   const [pointDest, setPointDest] = useState(null);
   const [texteDepart, setTexteDepart] = useState(
-    estModeGaz ? 'Dépôt SAHEL OXYGENE (Bobo-Dioulasso)' : initialDepart
+    estModeGaz ? 'Dépôt SAHEL OXYGENE (Djaradougou, Bobo-Dioulasso)' : initialDepart
   );
   const [texteDest, setTexteDest] = useState(initialDestination);
 

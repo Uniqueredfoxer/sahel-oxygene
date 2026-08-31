@@ -1,21 +1,18 @@
 /**
- * Grille tarifaire par distance (§4 du cahier des charges).
- * jusqu'à 8 km      -> 1000 FCFA
- * 8 à 12 km         -> 1500 FCFA
- * 12 à 17 km        -> 2000 FCFA
- * 17 à 25 km        -> 2500 FCFA
- * au-delà de 25 km  -> 3000 FCFA
+ * Grille tarifaire de livraison :
+ * 0 à 4 km      -> 1000 FCFA
+ * 4 à 8 km      -> 1500 FCFA
+ * Au-delà de 8 km -> 1500 FCFA + 100 FCFA / km supplémentaire
  */
 function calculerTarif(distanceKm) {
   const d = Number(distanceKm);
   if (!Number.isFinite(d) || d < 0) {
     throw new Error('Distance invalide');
   }
-  if (d <= 8) return 1000;
-  if (d <= 12) return 1500;
-  if (d <= 17) return 2000;
-  if (d <= 25) return 2500;
-  return 3000;
+  if (d <= 4) return 1000;
+  if (d <= 8) return 1500;
+  const kmSup = Math.ceil(d - 8);
+  return 1500 + kmSup * 100;
 }
 
 /**

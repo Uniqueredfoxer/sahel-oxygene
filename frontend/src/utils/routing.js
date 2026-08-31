@@ -1,8 +1,13 @@
 import axios from 'axios';
 import { extraireCoordonnees } from './geo';
 
-// Centre par défaut : Bobo-Dioulasso, Burkina Faso
-export const CENTRE_DEFAUT = { lat: 11.1772, lng: -4.2979, ville: 'Bobo-Dioulasso' };
+// Dépôt de référence et centre par défaut : Djaradougou, Bobo-Dioulasso
+export const CENTRE_DEFAUT = {
+  lat: 11.1850,
+  lng: -4.2980,
+  ville: 'Bobo-Dioulasso',
+  label: 'Dépôt SAHEL OXYGENE (Djaradougou, Bobo-Dioulasso)',
+};
 export const CENTRE_OUAGA = { lat: 12.3714, lng: -1.5197, ville: 'Ouagadougou' };
 
 /**
