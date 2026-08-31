@@ -3,7 +3,8 @@
  */
 
 export function validateEnv() {
-  const required = ['JWT_SECRET', 'DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
+  const hasDbUrl = Boolean(process.env.DATABASE_URL || process.env.DB_URL);
+  const required = ['JWT_SECRET', ...(hasDbUrl ? [] : ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'])];
   const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
@@ -13,7 +14,7 @@ export function validateEnv() {
   }
 
   // Validate JWT_SECRET strength
-  if (process.env.JWT_SECRET.length < 32) {
+  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
     console.warn('⚠️  WARNING: JWT_SECRET is less than 32 characters. Use a stronger secret in production.');
   }
 
@@ -25,6 +26,7 @@ export function validateEnv() {
     allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000')
       .split(',')
       .map((o) => o.trim()),
+    dbUrl: process.env.DATABASE_URL || process.env.DB_URL,
     dbHost: process.env.DB_HOST,
     dbPort: parseInt(process.env.DB_PORT || '5432', 10),
     dbUser: process.env.DB_USER,

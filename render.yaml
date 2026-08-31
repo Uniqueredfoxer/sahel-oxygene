@@ -17,4 +17,26 @@ services:
       - key: RATE_LIMIT_MAX_REQUESTS
         value: '5'
       - key: SUPER_ADMIN_EMAILS
-        value: admin@example.com
+        value: admin1@sahelox.bf,admin2@sahelox.bf,derboadama31@gmail.com
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        value: postgres
+      - key: DB_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_SSL
+        value: "true"
+      - key: JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: "https://saheloxygene.com,http://localhost:5173"
+      - key: PUBLIC_APP_URL
+        value: "https://saheloxygene.com"
+      - key: ADMIN_WHATSAPP_PRINCIPAL
+        value: "22607144118"

@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "seed": "node src/seed.js"
+    "seed": "node src/seed.js",
+    "test:db": "node scripts/test-db-connection.js",
+    "migrate:supabase": "node scripts/apply-supabase-schema.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
