@@ -23,6 +23,8 @@ import {
 } from '../utils/routing';
 import api from '../api/client';
 
+import { SECTEURS_BOBO, DEPOT_DJARADOUGOU } from '../utils/boboSecteurs';
+
 // Création d'icônes SVG Leaflet personnalisées
 function creerIconeMarker(lettre, couleur = '#059669') {
   const svgHtml = `
@@ -54,21 +56,6 @@ function creerIconeMarker(lettre, couleur = '#059669') {
 const iconeDepart = creerIconeMarker('A', '#059669'); // Vert Émeraude
 const iconeDestination = creerIconeMarker('📍', '#1E293B'); // Charbon foncé
 const iconeDepot = creerIconeMarker('🏭', '#047857'); // Dépôt Vert
-
-const QUARTIERS_RAPIDES = [
-  { nom: 'Djaradougou (Dépôt)', lat: 11.1850, lng: -4.2980 },
-  { nom: 'Sikasso-Cira', lat: 11.1790, lng: -4.2910 },
-  { nom: 'Grand Marché (Bobo)', lat: 11.1772, lng: -4.2979 },
-  { nom: 'Accart-Ville', lat: 11.1685, lng: -4.2882 },
-  { nom: 'Bindougousso', lat: 11.1920, lng: -4.3120 },
-  { nom: 'Kuinima', lat: 11.1620, lng: -4.3050 },
-  { nom: 'Farakan', lat: 11.1830, lng: -4.2750 },
-  { nom: 'Belleville', lat: 11.1980, lng: -4.2890 },
-  { nom: 'Sarfalao', lat: 11.1550, lng: -4.2820 },
-  { nom: 'Colma', lat: 11.1880, lng: -4.3210 },
-  { nom: 'Ouezzin-Ville', lat: 11.2050, lng: -4.3080 },
-  { nom: 'Ouaga 2000', lat: 12.3110, lng: -1.5030 },
-];
 
 export default function SelecteurItineraireMap({
   mode = 'destination_seule', // 'destination_seule' (Gaz) | 'trajet_complet' (Course)
@@ -553,22 +540,52 @@ export default function SelecteurItineraireMap({
           )}
         </div>
 
-        {/* Quartiers rapides en 1 clic */}
-        <div className="pt-2 border-t border-slate-100">
-          <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5">
-            Quartiers fréquents (1 clic) :
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {QUARTIERS_RAPIDES.map((q, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => appliquerCoordonneesDestination(q.lat, q.lng, `${q.nom}, Burkina Faso`)}
-                className="px-2 py-0.5 text-[11px] font-medium bg-slate-50 hover:bg-emerald-50 hover:text-sahel hover:border-emerald-200 text-slate-600 rounded-md border border-slate-200 transition-colors"
-              >
-                {q.nom}
-              </button>
-            ))}
+        {/* Secteurs et Quartiers de Bobo-Dioulasso avec distances mesurées */}
+        <div className="pt-2.5 border-t border-slate-100 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+              Choisir votre quartier / secteur (Bobo) :
+            </span>
+            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+              Distances réelles
+            </span>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1">
+            {SECTEURS_BOBO.map((s) => {
+              const estSelectionne =
+                pointDest &&
+                Math.abs(pointDest.lat - s.lat) < 0.003 &&
+                Math.abs(pointDest.lng - s.lng) < 0.003;
+
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() =>
+                    appliquerCoordonneesDestination(
+                      s.lat,
+                      s.lng,
+                      `${s.nom} (${s.secteur}), Bobo-Dioulasso`
+                    )
+                  }
+                  className={`px-2 py-1 text-[11px] font-medium rounded-lg border transition-all flex items-center gap-1 ${
+                    estSelectionne
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                      : 'bg-slate-50 hover:bg-emerald-50 hover:text-sahel-dark hover:border-emerald-200 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <span>{s.nom}</span>
+                  <span
+                    className={`text-[9px] font-mono px-1 py-0.2 rounded ${
+                      estSelectionne ? 'bg-emerald-700 text-emerald-100' : 'bg-slate-200/80 text-slate-600'
+                    }`}
+                  >
+                    {s.distanceKm} km
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
