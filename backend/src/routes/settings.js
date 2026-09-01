@@ -3,12 +3,13 @@ import { Setting } from '../models/index.js';
 import { authentifier, exigerRole } from '../middleware/auth.js';
 
 const router = express.Router();
-const NOM_PAR_DEFAUT = 'Gaz';
+const NOM_PAR_DEFAUT = 'SAHEL OXYGENE';
 
 // GET /api/settings/public — utilisé par le frontend (branding), accessible sans compte
 router.get('/public', async (req, res) => {
   const setting = await Setting.findByPk('app_name');
-  res.json({ appName: setting?.value || NOM_PAR_DEFAUT });
+  const val = setting?.value;
+  res.json({ appName: (val && val !== 'Gaz') ? val : NOM_PAR_DEFAUT });
 });
 
 // PATCH /api/settings — l'administrateur modifie le nom de la plateforme

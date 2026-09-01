@@ -20,10 +20,10 @@ export default function Logo({ className = '', href = '/' }) {
       </div>
       <div className="flex flex-col">
         <span className="font-display font-bold text-lg text-slate-900 tracking-tight leading-none group-hover:text-sahel-dark transition-colors">
-          {appName}
+          {appName && appName !== 'Gaz' ? appName : 'SAHEL OXYGENE'}
         </span>
         <span className="text-[10px] uppercase font-semibold tracking-wider text-sahel font-mono -mt-0.5">
-          Livraison & Gaz
+          Livraison Express & Gaz
         </span>
       </div>
     </div>

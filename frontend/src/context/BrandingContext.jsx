@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import api from '../api/client';
 
-const BrandingContext = createContext({ appName: 'Gaz', rafraichir: () => {} });
+const BrandingContext = createContext({ appName: 'SAHEL OXYGENE', rafraichir: () => {} });
 
 export function BrandingProvider({ children }) {
-  const [appName, setAppName] = useState('Gaz');
+  const [appName, setAppName] = useState('SAHEL OXYGENE');
 
   const rafraichir = useCallback(async () => {
     try {

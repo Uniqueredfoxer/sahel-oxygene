@@ -13,9 +13,9 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       manifest: {
-        name: 'Gaz',
-        short_name: 'Gaz',
-        description: 'Livraison et localisation de points de vente de gaz',
+        name: 'SAHEL OXYGENE',
+        short_name: 'SAHEL OXYGENE',
+        description: 'Livraison express et distribution de gaz',
         theme_color: '#1E8449',
         background_color: '#F5EEDC',
         display: 'standalone',

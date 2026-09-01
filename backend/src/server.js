@@ -139,7 +139,11 @@ async function demarrer() {
     }
 
     // Nom de plateforme par défaut si jamais défini
-    await Setting.findOrCreate({ where: { key: 'app_name' }, defaults: { key: 'app_name', value: 'Gaz' } });
+    const [setting] = await Setting.findOrCreate({ where: { key: 'app_name' }, defaults: { key: 'app_name', value: 'SAHEL OXYGENE' } });
+    if (setting && (!setting.value || setting.value === 'Gaz')) {
+      setting.value = 'SAHEL OXYGENE';
+      await setting.save();
+    }
     logger.info('Default platform settings initialized');
 
     server.listen(config.port, () => {
@@ -148,7 +152,7 @@ async function demarrer() {
         environment: config.nodeEnv,
         allowedOrigins: config.allowedOrigins
       });
-      console.log(`✅ Gaz — API démarrée sur le port ${config.port}`);
+      console.log(`✅ SAHEL OXYGENE — API démarrée sur le port ${config.port}`);
     });
   } catch (err) {
     logger.error('Failed to start server', { error: err.message, stack: err.stack });

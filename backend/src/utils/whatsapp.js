@@ -14,20 +14,19 @@ function lienWhatsApp(numero, message) {
   return `https://wa.me/${chiffres}?text=${texte}`;
 }
 
-function messageNouvelleCommande(livraison, urlVerification, appName = 'Gaz') {
+function messageNouvelleCommande(livraison, urlVerification, appName = 'SAHEL OXYGENE') {
   return (
-    `🆕 Nouvelle commande ${appName}\n` +
-    `N° ${livraison.numero}\n` +
+    `*${appName} — Nouvelle Course !*\n\n` +
+    `Course : *${livraison.numero}*\n` +
     `Client : ${livraison.clientNom || 'Non renseigné'} (${livraison.clientTelephone})\n` +
     `Départ : ${livraison.adresseDepart}\n` +
     `Destination : ${livraison.adresseDestination}\n` +
-    `Distance : ${livraison.distanceKm ?? '-'} km\n` +
-    `Montant : ${livraison.montant} FCFA\n` +
-    `Vérification : ${urlVerification}`
+    `Montant : *${livraison.montant} FCFA*\n\n` +
+    `Suivi en direct : ${urlVerification}`
   );
 }
 
-function messageRecu(livraison, urlVerification, appName = 'Gaz') {
+function messageRecu(livraison, urlVerification, appName = 'SAHEL OXYGENE') {
   return (
     `🧾 Reçu ${appName}\n` +
     `N° ${livraison.numero}\n` +

@@ -12,7 +12,7 @@ const GRIS = '#555555';
  * montant mis en évidence, signature du client, QR code de vérification.
  * Retourne un Buffer.
  */
-async function genererRecuPDF(livraison, urlVerification, appName = 'Gaz') {
+async function genererRecuPDF(livraison, urlVerification, appName = 'SAHEL OXYGENE') {
   return new Promise(async (resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: 'A4', margin: 0 });
