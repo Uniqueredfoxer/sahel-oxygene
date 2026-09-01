@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Shield,
   RefreshCw,
@@ -395,332 +396,340 @@ export default function EquipeTab() {
       {/* ============================================================ */}
       {/* MODAL 1: CRÉER UN COLLABORATEUR */}
       {/* ============================================================ */}
-      {modalCreation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-slide-up border border-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-sahel font-bold flex items-center justify-center">
-                  <UserPlus className="w-4 h-4" />
+      {modalCreation &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+            <div className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-slate-100 my-auto animate-slide-up">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-sahel font-bold flex items-center justify-center">
+                    <UserPlus className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="font-display font-bold text-base text-slate-900">Nouveau collaborateur</h2>
+                    <p className="text-[11px] text-slate-400">Création exclusive par l'administrateur</p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setModalCreation(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={soumettreCreation} className="space-y-4">
                 <div>
-                  <h2 className="font-display font-bold text-base text-slate-900">Nouveau collaborateur</h2>
-                  <p className="text-[11px] text-slate-400">Création exclusive par l'administrateur</p>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Nom complet *</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Moussa Diallo"
+                      className="input pl-9 text-xs"
+                      value={formCreer.name}
+                      onChange={(e) => setFormCreer({ ...formCreer, name: e.target.value })}
+                    />
+                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
                 </div>
-              </div>
-              <button
-                onClick={() => setModalCreation(false)}
-                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            <form onSubmit={soumettreCreation} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Nom complet *</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Moussa Diallo"
-                    className="input pl-9 text-xs"
-                    value={formCreer.name}
-                    onChange={(e) => setFormCreer({ ...formCreer, name: e.target.value })}
-                  />
-                  <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Adresse email *</label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      placeholder="moussa.diallo@sahel.com"
+                      className="input pl-9 text-xs"
+                      value={formCreer.email}
+                      onChange={(e) => setFormCreer({ ...formCreer, email: e.target.value })}
+                    />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Adresse email *</label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    required
-                    placeholder="moussa.diallo@sahel.com"
-                    className="input pl-9 text-xs"
-                    value={formCreer.email}
-                    onChange={(e) => setFormCreer({ ...formCreer, email: e.target.value })}
-                  />
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Numéro de téléphone</label>
+                  <div className="relative">
+                    <input
+                      type="tel"
+                      placeholder="Ex: 70123456"
+                      className="input pl-9 text-xs"
+                      value={formCreer.phone}
+                      onChange={(e) => setFormCreer({ ...formCreer, phone: e.target.value })}
+                    />
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Numéro de téléphone</label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    placeholder="Ex: 70123456"
-                    className="input pl-9 text-xs"
-                    value={formCreer.phone}
-                    onChange={(e) => setFormCreer({ ...formCreer, phone: e.target.value })}
-                  />
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">
+                    Mot de passe initial * (min 8 car., lettre + chiffre)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={afficherPassCreer ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      placeholder="••••••••"
+                      className="input pl-9 pr-10 text-xs"
+                      value={formCreer.password}
+                      onChange={(e) => setFormCreer({ ...formCreer, password: e.target.value })}
+                    />
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <button
+                      type="button"
+                      onClick={() => setAfficherPassCreer(!afficherPassCreer)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      {afficherPassCreer ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">
-                  Mot de passe initial * (min 8 car., lettre + chiffre)
-                </label>
-                <div className="relative">
-                  <input
-                    type={afficherPassCreer ? 'text' : 'password'}
-                    required
-                    minLength={8}
-                    placeholder="••••••••"
-                    className="input pl-9 pr-10 text-xs"
-                    value={formCreer.password}
-                    onChange={(e) => setFormCreer({ ...formCreer, password: e.target.value })}
-                  />
-                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1.5">Rôle attribué</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {ROLES.map((r) => (
+                      <label
+                        key={r.id}
+                        className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all ${
+                          formCreer.role === r.id
+                            ? 'border-emerald-500 bg-emerald-50/70 text-sahel-dark shadow-xs'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="role"
+                          value={r.id}
+                          checked={formCreer.role === r.id}
+                          onChange={(e) => setFormCreer({ ...formCreer, role: e.target.value })}
+                          className="accent-emerald-600"
+                        />
+                        <span>{r.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setAfficherPassCreer(!afficherPassCreer)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    onClick={() => setModalCreation(false)}
+                    className="btn-secondary text-xs py-2 px-4 font-semibold"
                   >
-                    {afficherPassCreer ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={chargementCreer}
+                    className="btn-primary text-xs py-2 px-5 font-semibold"
+                  >
+                    {chargementCreer ? 'Création en cours…' : 'Créer le compte'}
                   </button>
                 </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1.5">Rôle attribué</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {ROLES.map((r) => (
-                    <label
-                      key={r.id}
-                      className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all ${
-                        formCreer.role === r.id
-                          ? 'border-emerald-500 bg-emerald-50/70 text-sahel-dark shadow-xs'
-                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="role"
-                        value={r.id}
-                        checked={formCreer.role === r.id}
-                        onChange={(e) => setFormCreer({ ...formCreer, role: e.target.value })}
-                        className="accent-emerald-600"
-                      />
-                      <span>{r.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setModalCreation(false)}
-                  className="btn-secondary text-xs py-2 px-4 font-semibold"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={chargementCreer}
-                  className="btn-primary text-xs py-2 px-5 font-semibold"
-                >
-                  {chargementCreer ? 'Création en cours…' : 'Créer le compte'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* ============================================================ */}
       {/* MODAL 2: MODIFIER UN COLLABORATEUR */}
       {/* ============================================================ */}
-      {modalEdition && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-slide-up border border-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 font-bold flex items-center justify-center">
-                  <Edit2 className="w-4 h-4" />
+      {modalEdition &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+            <div className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-slate-100 my-auto animate-slide-up">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 font-bold flex items-center justify-center">
+                    <Edit2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="font-display font-bold text-base text-slate-900">Modifier le collaborateur</h2>
+                    <p className="text-[11px] text-slate-400">{modalEdition.name}</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="font-display font-bold text-base text-slate-900">Modifier le collaborateur</h2>
-                  <p className="text-[11px] text-slate-400">{modalEdition.name}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setModalEdition(null)}
-                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={soumettreEdition} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Nom complet *</label>
-                <input
-                  type="text"
-                  required
-                  className="input text-xs"
-                  value={formEditer.name}
-                  onChange={(e) => setFormEditer({ ...formEditer, name: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Adresse email *</label>
-                <input
-                  type="email"
-                  required
-                  className="input text-xs"
-                  value={formEditer.email}
-                  onChange={(e) => setFormEditer({ ...formEditer, email: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">Numéro de téléphone</label>
-                <input
-                  type="tel"
-                  className="input text-xs"
-                  value={formEditer.phone}
-                  onChange={(e) => setFormEditer({ ...formEditer, phone: e.target.value })}
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
                 <button
-                  type="button"
                   onClick={() => setModalEdition(null)}
-                  className="btn-secondary text-xs py-2 px-4 font-semibold"
+                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
                 >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={chargementEditer}
-                  className="btn-primary text-xs py-2 px-5 font-semibold"
-                >
-                  {chargementEditer ? 'Enregistrement…' : 'Enregistrer'}
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+
+              <form onSubmit={soumettreEdition} className="space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Nom complet *</label>
+                  <input
+                    type="text"
+                    required
+                    className="input text-xs"
+                    value={formEditer.name}
+                    onChange={(e) => setFormEditer({ ...formEditer, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Adresse email *</label>
+                  <input
+                    type="email"
+                    required
+                    className="input text-xs"
+                    value={formEditer.email}
+                    onChange={(e) => setFormEditer({ ...formEditer, email: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">Numéro de téléphone</label>
+                  <input
+                    type="tel"
+                    className="input text-xs"
+                    value={formEditer.phone}
+                    onChange={(e) => setFormEditer({ ...formEditer, phone: e.target.value })}
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalEdition(null)}
+                    className="btn-secondary text-xs py-2 px-4 font-semibold"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={chargementEditer}
+                    className="btn-primary text-xs py-2 px-5 font-semibold"
+                  >
+                    {chargementEditer ? 'Enregistrement…' : 'Enregistrer'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* ============================================================ */}
       {/* MODAL 3: RÉINITIALISER LE MOT DE PASSE */}
       {/* ============================================================ */}
-      {modalPassword && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-slide-up border border-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 font-bold flex items-center justify-center">
-                  <KeyRound className="w-4 h-4" />
+      {modalPassword &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+            <div className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-slate-100 my-auto animate-slide-up">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 font-bold flex items-center justify-center">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="font-display font-bold text-base text-slate-900">Changer le mot de passe</h2>
+                    <p className="text-[11px] text-slate-400">Pour {modalPassword.name}</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="font-display font-bold text-base text-slate-900">Changer le mot de passe</h2>
-                  <p className="text-[11px] text-slate-400">Pour {modalPassword.name}</p>
-                </div>
+                <button
+                  onClick={() => setModalPassword(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                onClick={() => setModalPassword(null)}
-                className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            <form onSubmit={soumettrePassword} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">
-                  Nouveau mot de passe * (min 8 car., lettre + chiffre)
-                </label>
-                <div className="relative">
-                  <input
-                    type={afficherPassReset ? 'text' : 'password'}
-                    required
-                    minLength={8}
-                    placeholder="Saisir le nouveau mot de passe"
-                    className="input pl-9 pr-10 text-xs"
-                    value={nouveauPass}
-                    onChange={(e) => setNouveauPass(e.target.value)}
-                  />
-                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <form onSubmit={soumettrePassword} className="space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 block mb-1">
+                    Nouveau mot de passe * (min 8 car., lettre + chiffre)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={afficherPassReset ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      placeholder="Saisir le nouveau mot de passe"
+                      className="input pl-9 pr-10 text-xs"
+                      value={nouveauPass}
+                      onChange={(e) => setNouveauPass(e.target.value)}
+                    />
+                    <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <button
+                      type="button"
+                      onClick={() => setAfficherPassReset(!afficherPassReset)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      {afficherPassReset ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
                   <button
                     type="button"
-                    onClick={() => setAfficherPassReset(!afficherPassReset)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    onClick={() => setModalPassword(null)}
+                    className="btn-secondary text-xs py-2 px-4 font-semibold"
                   >
-                    {afficherPassReset ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={chargementPassword}
+                    className="btn-primary text-xs py-2 px-5 font-semibold bg-amber-600 hover:bg-amber-700"
+                  >
+                    {chargementPassword ? 'Mise à jour…' : 'Définir le mot de passe'}
                   </button>
                 </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* ============================================================ */}
+      {/* MODAL 4: CONFIRMATION DE SUPPRESSION */}
+      {/* ============================================================ */}
+      {modalSuppression &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+            <div className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 border border-rose-100 my-auto animate-slide-up">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
+                <ShieldAlert className="w-6 h-6 text-rose-600" />
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="text-center space-y-1.5">
+                <h2 className="font-display font-bold text-lg text-slate-900">Supprimer ce collaborateur ?</h2>
+                <p className="text-slate-500 text-xs">
+                  Êtes-vous sûr de vouloir supprimer définitivement le compte de{' '}
+                  <strong className="text-slate-800 font-semibold">{modalSuppression.name}</strong> ({modalSuppression.email}) ?
+                </p>
+                <p className="text-[11px] text-rose-600 font-medium">Cette action est irréversible.</p>
+              </div>
+
+              <div className="pt-2 flex items-center justify-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setModalPassword(null)}
+                  onClick={() => setModalSuppression(null)}
                   className="btn-secondary text-xs py-2 px-4 font-semibold"
                 >
                   Annuler
                 </button>
                 <button
-                  type="submit"
-                  disabled={chargementPassword}
-                  className="btn-primary text-xs py-2 px-5 font-semibold bg-amber-600 hover:bg-amber-700"
+                  type="button"
+                  onClick={soumettreSuppression}
+                  disabled={chargementSupprimer}
+                  className="btn-primary text-xs py-2 px-5 font-semibold bg-rose-600 hover:bg-rose-700 shadow-xs"
                 >
-                  {chargementPassword ? 'Mise à jour…' : 'Définir le mot de passe'}
+                  {chargementSupprimer ? 'Suppression…' : 'Confirmer la suppression'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================ */}
-      {/* MODAL 4: CONFIRMATION DE SUPPRESSION */}
-      {/* ============================================================ */}
-      {modalSuppression && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-slide-up border border-rose-100">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
-              <ShieldAlert className="w-6 h-6 text-rose-600" />
             </div>
-
-            <div className="text-center space-y-1.5">
-              <h2 className="font-display font-bold text-lg text-slate-900">Supprimer ce collaborateur ?</h2>
-              <p className="text-slate-500 text-xs">
-                Êtes-vous sûr de vouloir supprimer définitivement le compte de{' '}
-                <strong className="text-slate-800 font-semibold">{modalSuppression.name}</strong> ({modalSuppression.email}) ?
-              </p>
-              <p className="text-[11px] text-rose-600 font-medium">Cette action est irréversible.</p>
-            </div>
-
-            <div className="pt-2 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setModalSuppression(null)}
-                className="btn-secondary text-xs py-2 px-4 font-semibold"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={soumettreSuppression}
-                disabled={chargementSupprimer}
-                className="btn-primary text-xs py-2 px-5 font-semibold bg-rose-600 hover:bg-rose-700 shadow-xs"
-              >
-                {chargementSupprimer ? 'Suppression…' : 'Confirmer la suppression'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

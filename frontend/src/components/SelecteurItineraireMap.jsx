@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import L from 'leaflet';
 import {
   MapPin,
@@ -634,76 +635,78 @@ export default function SelecteurItineraireMap({
 
 
       {/* Modal / Pop-in pour Coller un lien Google Maps */}
-      {modalGmaps && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="card max-w-md w-full p-6 shadow-2xl space-y-4 bg-white border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 text-sahel flex items-center justify-center">
-                  <LinkIcon className="w-4 h-4" />
+      {modalGmaps &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto animate-fade-in">
+            <div className="card max-w-md w-full p-6 shadow-2xl space-y-4 bg-white border border-slate-200 my-auto animate-slide-up">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-sahel flex items-center justify-center">
+                    <LinkIcon className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-display font-bold text-base text-slate-900">
+                    Coller un repère Google Maps
+                  </h3>
                 </div>
-                <h3 className="font-display font-bold text-base text-slate-900">
-                  Coller un repère Google Maps
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setModalGmaps(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Sur Google Maps, appuyez longuement sur votre maison pour déposer un repère, cliquez sur <strong>Partager</strong> et collez le lien ici :
-            </p>
-
-            <form onSubmit={validerLienGmaps} className="space-y-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  className="input text-xs font-mono"
-                  placeholder="https://maps.app.goo.gl/... ou 11.1772, -4.2979"
-                  value={inputGmaps}
-                  onChange={(e) => setInputGmaps(e.target.value)}
-                  autoFocus
-                />
-              </div>
-
-              {erreurGmaps && (
-                <p className="text-xs text-red-600 flex items-center gap-1 font-medium">
-                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  {erreurGmaps}
-                </p>
-              )}
-
-              {succesGmaps && (
-                <p className="text-xs text-emerald-600 flex items-center gap-1 font-semibold">
-                  <Check className="w-3.5 h-3.5 shrink-0" />
-                  Position appliquée avec succès !
-                </p>
-              )}
-
-              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setModalGmaps(false)}
-                  className="btn-ghost text-xs py-2 px-3"
+                  className="text-slate-400 hover:text-slate-600 text-sm font-bold"
                 >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary text-xs py-2 px-4 shadow-sm"
-                >
-                  Appliquer la position
+                  ✕
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Sur Google Maps, appuyez longuement sur votre maison pour déposer un repère, cliquez sur <strong>Partager</strong> et collez le lien ici :
+              </p>
+
+              <form onSubmit={validerLienGmaps} className="space-y-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="input text-xs font-mono"
+                    placeholder="https://maps.app.goo.gl/... ou 11.1772, -4.2979"
+                    value={inputGmaps}
+                    onChange={(e) => setInputGmaps(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+
+                {erreurGmaps && (
+                  <p className="text-xs text-red-600 flex items-center gap-1 font-medium">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {erreurGmaps}
+                  </p>
+                )}
+
+                {succesGmaps && (
+                  <p className="text-xs text-emerald-600 flex items-center gap-1 font-semibold">
+                    <Check className="w-3.5 h-3.5 shrink-0" />
+                    Position appliquée avec succès !
+                  </p>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalGmaps(false)}
+                    className="btn-ghost text-xs py-2 px-3"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary text-xs py-2 px-4 shadow-sm"
+                  >
+                    Appliquer la position
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
