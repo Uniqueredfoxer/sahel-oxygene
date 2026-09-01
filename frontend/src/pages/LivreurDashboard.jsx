@@ -23,6 +23,7 @@ import { useToast } from '../context/ToastContext';
 export default function LivreurDashboard() {
   const { user, deconnexion } = useAuth();
   const [courses, setCourses] = useState([]);
+  const [filtreStatut, setFiltreStatut] = useState('en_cours');
   const [selection, setSelection] = useState(null);
   const [partagePosition, setPartagePosition] = useState(false);
   const [signature, setSignature] = useState(null);
@@ -34,12 +35,12 @@ export default function LivreurDashboard() {
 
   const charger = useCallback(async () => {
     try {
-      const { data } = await api.get('/livraisons/mine');
+      const { data } = await api.get(`/livraisons/mine?statut=${filtreStatut}`);
       setCourses(data);
     } catch (err) {
       console.error(err);
     }
-  }, []);
+  }, [filtreStatut]);
 
   useEffect(() => {
     charger();
@@ -305,11 +306,45 @@ export default function LivreurDashboard() {
         <div className="flex justify-between items-end">
           <div>
             <span className="text-xs font-bold text-sahel uppercase tracking-wider">Cockpit Livreur</span>
-            <h1 className="font-display text-2xl font-bold text-slate-900">Mes courses en cours</h1>
+            <h1 className="font-display text-2xl font-bold text-slate-900">Mes Livraisons</h1>
           </div>
           <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold font-mono">
-            {courses.length} active{courses.length > 1 ? 's' : ''}
+            {courses.length} course{courses.length > 1 ? 's' : ''}
           </span>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFiltreStatut('en_cours')}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all text-center ${
+              filtreStatut === 'en_cours'
+                ? 'bg-sahel text-white shadow-emerald shadow-xs'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            En cours
+          </button>
+          <button
+            onClick={() => setFiltreStatut('livree')}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all text-center ${
+              filtreStatut === 'livree'
+                ? 'bg-sahel text-white shadow-emerald shadow-xs'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Historique
+          </button>
+          <button
+            onClick={() => setFiltreStatut('toutes')}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all text-center ${
+              filtreStatut === 'toutes'
+                ? 'bg-sahel text-white shadow-emerald shadow-xs'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Toutes
+          </button>
         </div>
 
         {courses.length === 0 && (
@@ -318,9 +353,15 @@ export default function LivreurDashboard() {
               <Bike className="w-8 h-8 text-slate-400" />
             </div>
             <div>
-              <p className="font-display font-semibold text-base text-slate-800">Aucune course assignée</p>
+              <p className="font-display font-semibold text-base text-slate-800">
+                {filtreStatut === 'en_cours'
+                  ? 'Aucune course en cours assignée'
+                  : 'Aucune livraison trouvée dans cette catégorie'}
+              </p>
               <p className="text-slate-500 text-xs mt-1 max-w-xs mx-auto">
-                Dès qu'une nouvelle livraison vous est attribuée par un gestionnaire, elle apparaîtra instantanément ici.
+                {filtreStatut === 'en_cours'
+                  ? "Dès qu'une nouvelle livraison vous est attribuée, elle apparaîtra instantanément ici."
+                  : 'Vos livraisons terminées apparaîtront dans votre historique.'}
               </p>
             </div>
           </div>

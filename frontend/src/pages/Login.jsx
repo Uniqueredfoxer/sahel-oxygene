@@ -109,12 +109,9 @@ export default function Login() {
           </form>
         </div>
 
-        <div className="text-center space-y-2 text-sm text-slate-500">
-          <p>
-            Nouveau collaborateur ?{' '}
-            <Link to="/inscription" className="text-sahel font-bold hover:underline">
-              Créer un compte
-            </Link>
+        <div className="text-center space-y-3 text-sm text-slate-500">
+          <p className="text-xs text-slate-400">
+            Accès réservé. Les identifiants sont fournis par l'administrateur de Sahel Oxygène.
           </p>
           <p>
             <Link to="/" className="text-xs text-slate-400 hover:text-slate-600 inline-flex items-center gap-1">

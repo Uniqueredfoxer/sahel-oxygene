@@ -43,11 +43,27 @@ router.get('/', authentifier, exigerRole(...STAFF), async (req, res) => {
   res.json(livraisons);
 });
 
+function verifierAccesLivreur(req, livraison) {
+  const roles = req.roles || [];
+  if (roles.includes('administrateur') || roles.includes('gestionnaire')) return true;
+  return livraison.livreurId === req.user.id;
+}
+
 // GET /api/livraisons/mine — courses assignées au livreur connecté (§3.2)
 router.get('/mine', authentifier, exigerRole('livreur', ...STAFF), async (req, res) => {
+  const { statut } = req.query;
+  const where = { livreurId: req.user.id };
+
+  if (statut && ['en_cours', 'livree', 'annulee'].includes(statut)) {
+    where.statut = statut;
+  } else if (!statut || statut === 'actives') {
+    where.statut = 'en_cours';
+  }
+
   const livraisons = await Livraison.findAll({
-    where: { livreurId: req.user.id, statut: { [Op.in]: ['en_cours'] } },
-    order: [['assignedAt', 'DESC']],
+    where,
+    order: [['createdAt', 'DESC']],
+    limit: 100,
   });
   res.json(livraisons);
 });
@@ -207,6 +223,10 @@ router.post('/:id/position', authentifier, exigerRole('livreur', ...STAFF), asyn
   const livraison = await Livraison.findByPk(req.params.id);
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
 
+  if (!verifierAccesLivreur(req, livraison)) {
+    return res.status(403).json({ error: 'Accès non autorisé à cette livraison' });
+  }
+
   const position = await GpsPosition.create({
     livraisonId: livraison.id,
     livreurId: req.user.id,
@@ -228,6 +248,13 @@ router.post('/:id/position', authentifier, exigerRole('livreur', ...STAFF), asyn
 
 // GET /api/livraisons/:id/positions — trajet complet pour la carte de suivi (§3.4)
 router.get('/:id/positions', authentifier, exigerRole(...TOUS_ROLES), async (req, res) => {
+  const livraison = await Livraison.findByPk(req.params.id);
+  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+  if (!verifierAccesLivreur(req, livraison)) {
+    return res.status(403).json({ error: 'Accès non autorisé à cette livraison' });
+  }
+
   const positions = await GpsPosition.findAll({
     where: { livraisonId: req.params.id },
     order: [['recordedAt', 'ASC']],
@@ -249,6 +276,10 @@ router.post('/:id/valider', authentifier, exigerRole('livreur', ...STAFF), async
   const { signatureDataUrl } = req.body;
   const livraison = await Livraison.findByPk(req.params.id);
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+  if (!verifierAccesLivreur(req, livraison)) {
+    return res.status(403).json({ error: 'Accès non autorisé à cette livraison' });
+  }
 
   livraison.signatureDataUrl = signatureDataUrl || livraison.signatureDataUrl;
   livraison.statut = 'livree';
@@ -273,6 +304,11 @@ router.get('/:id/recu', authentifier, exigerRole(...TOUS_ROLES), async (req, res
     include: [{ model: User, as: 'livreur', attributes: ['id', 'name'] }],
   });
   if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+
+  if (!verifierAccesLivreur(req, livraison)) {
+    return res.status(403).json({ error: 'Accès non autorisé à cette livraison' });
+  }
+
   const pdfBuffer = await genererRecuPDF(livraison, urlVerification(livraison.qrToken), await obtenirNomPlateforme());
   res.set('Content-Type', 'application/pdf');
   res.set('Content-Disposition', `inline; filename="${livraison.numero}.pdf"`);

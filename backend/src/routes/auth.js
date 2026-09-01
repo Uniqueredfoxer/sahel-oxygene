@@ -32,35 +32,11 @@ const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || '')
   .filter(Boolean);
 
 // POST /api/auth/register
-// Aucune inscription anonyme n'accorde de rôle automatiquement,
-// SAUF les 2 comptes super-administrateurs définis en config (§2).
+// L'inscription publique est désactivée. Les comptes sont exclusivement créés par l'administrateur.
 router.post('/register', async (req, res) => {
-  try {
-    const { name, email, phone, password } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Nom, email et mot de passe requis' });
-    }
-    const existant = await User.findOne({ where: { email: email.toLowerCase() } });
-    if (existant) {
-      return res.status(409).json({ error: 'Un compte existe déjà avec cet email' });
-    }
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      phone,
-      passwordHash,
-    });
-
-    if (SUPER_ADMIN_EMAILS.includes(email.toLowerCase())) {
-      await UserRole.create({ userId: user.id, role: 'administrateur' });
-    }
-
-    const token = signToken(user);
-    res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email } });
-  } catch (err) {
-    res.status(500).json({ error: 'Erreur lors de l’inscription', details: err.message });
-  }
+  return res.status(403).json({
+    error: 'L\'inscription publique est désactivée. Les comptes sont créés et attribués exclusivement par l\'administrateur.',
+  });
 });
 
 // POST /api/auth/login

@@ -62,7 +62,7 @@ export default function App() {
                 <Route path="/verifier/:qrToken" element={<Verify />} />
                 <Route path="/gaz" element={<FindGas />} />
                 <Route path="/connexion" element={<Login />} />
-                <Route path="/inscription" element={<Register />} />
+                <Route path="/inscription" element={<Navigate to="/connexion" replace />} />
                 <Route
                   path="/app"
                   element={
