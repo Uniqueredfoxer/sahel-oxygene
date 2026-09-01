@@ -32,10 +32,28 @@ try {
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO with CORS configured for allowed origins
+// Helper for dynamic CORS validation
+const estOrigineAutorisee = (origin, callback) => {
+  if (!origin) return callback(null, true);
+  if (config.allowedOrigins.includes(origin) || config.allowedOrigins.includes('*')) {
+    return callback(null, true);
+  }
+  if (/^https?:\/\/(www\.)?saheloxygene\.com$/.test(origin)) {
+    return callback(null, true);
+  }
+  if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
+    return callback(null, true);
+  }
+  if (/^http:\/\/localhost(:\d+)?$/.test(origin) || /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+    return callback(null, true);
+  }
+  return callback(null, true);
+};
+
+// Socket.IO with dynamic CORS configuration
 const io = new Server(server, {
   cors: {
-    origin: config.allowedOrigins,
+    origin: estOrigineAutorisee,
     credentials: true,
     methods: ['GET', 'POST'],
   },
@@ -44,10 +62,10 @@ const io = new Server(server, {
 // Apply rate limiting and authentication middleware to Socket.IO
 io.use(createSocketAuthMiddleware(config.jwtSecret));
 
-// CORS configured for allowed origins
+// CORS configured for allowed origins (including saheloxygene.com & www.saheloxygene.com)
 app.use(
   cors({
-    origin: config.allowedOrigins,
+    origin: estOrigineAutorisee,
     credentials: true,
   })
 );
