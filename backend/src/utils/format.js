@@ -6,7 +6,9 @@ function formaterMontant(montant) {
 
 /** Formate une date en français sans espace insécable (sûr pour PDFKit). */
 function formaterDate(date) {
+  if (!date) return '-';
   const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
   const jj = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const aaaa = d.getFullYear();

@@ -25,7 +25,7 @@ export async function telechargerFichier(url, nomFichierParDefaut = 'document.pd
 
     // Créer un blob URL et simuler un clic pour déclencher le téléchargement
     const blob = new Blob([response.data], {
-      type: response.headers['content-type'] || 'application/octet-stream',
+      type: response.headers['content-type'] || 'application/pdf',
     });
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -37,7 +37,21 @@ export async function telechargerFichier(url, nomFichierParDefaut = 'document.pd
     window.URL.revokeObjectURL(downloadUrl);
   } catch (err) {
     console.error('Erreur lors du téléchargement :', err);
-    throw new Error('Impossible de télécharger le fichier. Vérifiez votre session.');
+    if (err.response && err.response.data instanceof Blob) {
+      try {
+        const text = await err.response.data.text();
+        const json = JSON.parse(text);
+        if (json.error) {
+          throw new Error(json.error);
+        }
+      } catch (parseErr) {
+        if (parseErr.message && !parseErr.message.includes('JSON')) {
+          throw parseErr;
+        }
+      }
+    }
+    const message = err?.response?.data?.error || err?.message || 'Impossible de télécharger le fichier.';
+    throw new Error(message);
   }
 }
 

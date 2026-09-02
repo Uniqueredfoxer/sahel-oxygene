@@ -8,8 +8,10 @@ import {
   FileText,
   AlertOctagon,
   Plus,
+  Loader2,
 } from 'lucide-react';
 import api from '../api/client';
+import { telechargerFichier } from '../utils/download';
 import Logo from '../components/Logo';
 import StatutPill from '../components/StatutPill';
 
@@ -25,6 +27,7 @@ export default function TrackOrder() {
   const [livraison, setLivraison] = useState(null);
   const [erreur, setErreur] = useState('');
   const [chargement, setChargement] = useState(false);
+  const [telechargement, setTelechargement] = useState(false);
   const navigate = useNavigate();
 
   const rechercher = async (n) => {
@@ -39,6 +42,18 @@ export default function TrackOrder() {
       setErreur('Aucune commande trouvée avec ce numéro. Vérifiez la saisie.');
     } finally {
       setChargement(false);
+    }
+  };
+
+  const telechargerRecu = async () => {
+    if (!livraison?.qrToken) return;
+    setTelechargement(true);
+    try {
+      await telechargerFichier(`/public/recu/${livraison.qrToken}`, `recu-${livraison.numero}.pdf`);
+    } catch {
+      alert('Impossible de télécharger le reçu.');
+    } finally {
+      setTelechargement(false);
     }
   };
 
@@ -59,29 +74,29 @@ export default function TrackOrder() {
       <header className="px-5 py-3.5 border-b border-charbon-100 bg-white/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between shadow-sm">
         <Logo />
         <Link
-          to="/"
-          className="text-xs font-semibold px-3.5 py-1.5 rounded-full bg-emerald-50 text-sahel-dark hover:bg-emerald-100 transition-colors border border-emerald-200/50 flex items-center gap-1.5"
+          to="/commander"
+          className="btn-primary text-xs py-2 px-3 flex items-center gap-1.5 shadow-sm"
         >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Nouvelle commande</span>
+          <Plus className="w-4 h-4" />
+          <span>Nouvelle course</span>
         </Link>
       </header>
 
-      <main className="flex-1 px-5 py-8 max-w-lg mx-auto w-full space-y-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-slate-900">Suivi de livraison</h1>
-          <p className="text-slate-500 text-sm mt-1">Consultez l'état d'avancement de votre course en temps réel.</p>
+      <main className="flex-1 max-w-lg mx-auto w-full px-5 py-8 space-y-6">
+        <div className="text-center space-y-2">
+          <span className="text-xs font-bold text-sahel uppercase tracking-wider">Suivi en direct</span>
+          <h1 className="font-display text-3xl font-bold text-slate-900">Où est ma livraison ?</h1>
+          <p className="text-xs text-slate-500">
+            Saisissez votre numéro de commande pour connaître l'état de votre course
+          </p>
         </div>
 
-        {/* Search input form */}
+        {/* Search Bar */}
         <form
           className="flex gap-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (numero.trim()) {
-              navigate(`/suivi/${numero.trim()}`);
-              rechercher(numero.trim());
-            }
+            rechercher(numero);
           }}
         >
           <div className="relative flex-1">
@@ -235,15 +250,24 @@ export default function TrackOrder() {
               </div>
 
               {livraison.statut === 'livree' && (
-                <a
+                <button
+                  type="button"
+                  onClick={telechargerRecu}
+                  disabled={telechargement}
                   className="btn-secondary w-full flex items-center justify-center gap-2"
-                  href={`/api/public/recu/${livraison.qrToken}`}
-                  target="_blank"
-                  rel="noreferrer"
                 >
-                  <FileText className="w-4 h-4 text-sahel" />
-                  <span>Télécharger le reçu officiel PDF</span>
-                </a>
+                  {telechargement ? (
+                    <>
+                      <Loader2 className="w-4 h-4 text-sahel animate-spin" />
+                      <span>Téléchargement…</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4 text-sahel" />
+                      <span>Télécharger le reçu officiel PDF</span>
+                    </>
+                  )}
+                </button>
               )}
             </div>
           </div>

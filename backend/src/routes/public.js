@@ -152,17 +152,27 @@ router.get('/verifier/:qrToken', async (req, res) => {
   });
 });
 
-// GET /api/public/recu/:qrToken.pdf — téléchargement du reçu (accessible via QR code)
+// GET /api/public/recu/:qrToken — téléchargement du reçu (accessible via QR code)
 router.get('/recu/:qrToken', async (req, res) => {
-  const livraison = await Livraison.findOne({
-    where: { qrToken: req.params.qrToken },
-    include: [{ model: User, as: 'livreur', attributes: ['id', 'name'] }],
-  });
-  if (!livraison) return res.status(404).json({ error: 'Reçu introuvable' });
-  const pdfBuffer = await genererRecuPDF(livraison, urlVerification(livraison.qrToken), await obtenirNomPlateforme());
-  res.set('Content-Type', 'application/pdf');
-  res.set('Content-Disposition', `inline; filename="${livraison.numero}.pdf"`);
-  res.send(pdfBuffer);
+  try {
+    const rawToken = req.params.qrToken || '';
+    const cleanToken = rawToken.replace(/\.pdf$/i, '');
+    const livraison = await Livraison.findOne({
+      where: { qrToken: cleanToken },
+      include: [{ model: User, as: 'livreur', attributes: ['id', 'name'] }],
+    });
+    if (!livraison) return res.status(404).json({ error: 'Reçu introuvable' });
+
+    const appName = await obtenirNomPlateforme();
+    const verificationUrl = urlVerification(livraison.qrToken);
+    const pdfBuffer = await genererRecuPDF(livraison, verificationUrl, appName);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', `attachment; filename="${livraison.numero}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Erreur génération reçu public PDF:', err);
+    res.status(500).json({ error: 'Erreur lors de la génération du reçu', details: err.message });
+  }
 });
 
 export default router;

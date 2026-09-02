@@ -107,13 +107,10 @@ export default function LivreurDashboard() {
   const telechargerRecu = async (livraisonObj) => {
     setTelechargement(true);
     try {
-      if (livraisonObj.qrToken) {
-        window.open(`/api/public/recu/${livraisonObj.qrToken}`, '_blank');
-      } else {
-        await telechargerFichier(`/livraisons/${livraisonObj.id}/recu`, `${livraisonObj.numero}.pdf`);
-      }
+      await telechargerFichier(`/livraisons/${livraisonObj.id}/recu`, `${livraisonObj.numero}.pdf`);
+      toast.succes('Reçu téléchargé avec succès');
     } catch (err) {
-      toast.erreur('Impossible de télécharger le reçu.');
+      toast.erreur(messageErreur(err) || 'Impossible de télécharger le reçu.');
     } finally {
       setTelechargement(false);
     }

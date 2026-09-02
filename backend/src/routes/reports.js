@@ -231,9 +231,14 @@ router.get('/export/pdf', authentifier, exigerRole(...STAFF), async (req, res) =
         doc.rect(40, rowY - 2, doc.page.width - 80, 18).fill('#F8FAFC');
       }
 
+      const dep = (l.adresseDepart || '-').slice(0, 20);
+      const dest = (l.adresseDestination || '-').slice(0, 20);
+      const tel = l.clientTelephone || '-';
+      const num = l.numero || '-';
+
       doc.fillColor('#111111')
         .text(
-          `${l.numero}  ·  ${formaterDate(l.createdAt)}  ·  ${l.clientTelephone}  ·  ${l.adresseDepart.slice(0, 20)} → ${l.adresseDestination.slice(0, 20)}  ·  ${formaterMontant(l.montant)} FCFA  ·  [${l.statut}]`,
+          `${num}  ·  ${formaterDate(l.createdAt)}  ·  ${tel}  ·  ${dep} → ${dest}  ·  ${formaterMontant(l.montant)} FCFA  ·  [${l.statut || '-'}]`,
           45,
           rowY + 2,
           { width: doc.page.width - 90, lineBreak: false }

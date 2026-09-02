@@ -24,8 +24,11 @@ import {
   Tag,
   Trash2,
   Layers,
+  FileText,
+  Loader2,
 } from 'lucide-react';
 import api, { messageErreur } from '../api/client';
+import { telechargerFichier } from '../utils/download';
 import Logo from '../components/Logo';
 import SelecteurItineraireMap from '../components/SelecteurItineraireMap';
 import { useToast } from '../context/ToastContext';
@@ -116,6 +119,7 @@ export default function ClientOrder() {
 
   const [estimation, setEstimation] = useState(null);
   const [chargement, setChargement] = useState(false);
+  const [telechargeantRecu, setTelechargeantRecu] = useState(false);
   const [erreur, setErreur] = useState('');
   const [resultat, setResultat] = useState(null);
   const navigate = useNavigate();
@@ -274,6 +278,22 @@ export default function ClientOrder() {
       setErreur(messageErreur(err));
     } finally {
       setChargement(false);
+    }
+  };
+
+  const telechargerRecuPDF = async () => {
+    if (!resultat?.livraison?.qrToken) return;
+    setTelechargeantRecu(true);
+    try {
+      await telechargerFichier(
+        `/public/recu/${resultat.livraison.qrToken}`,
+        `recu-${resultat.livraison.numero}.pdf`
+      );
+      toast.succes('Reçu PDF téléchargé avec succès');
+    } catch {
+      toast.erreur('Impossible de télécharger le reçu.');
+    } finally {
+      setTelechargeantRecu(false);
     }
   };
 
@@ -899,6 +919,28 @@ export default function ClientOrder() {
                 <Send className="w-4 h-4" />
                 <span>Envoyer ma commande sur WhatsApp</span>
               </a>
+            )}
+
+            {/* Télécharger le reçu / Bon de commande PDF */}
+            {resultat.livraison?.qrToken && (
+              <button
+                type="button"
+                onClick={telechargerRecuPDF}
+                disabled={telechargeantRecu}
+                className="btn-secondary w-full py-3 text-xs font-semibold flex items-center justify-center gap-2"
+              >
+                {telechargeantRecu ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-sahel" />
+                    <span>Téléchargement du reçu…</span>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4 text-sahel" />
+                    <span>Télécharger le bon / reçu PDF</span>
+                  </>
+                )}
+              </button>
             )}
 
             <div className="pt-2 flex flex-col sm:flex-row items-center gap-2">

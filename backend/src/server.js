@@ -67,6 +67,7 @@ app.use(
   cors({
     origin: estOrigineAutorisee,
     credentials: true,
+    exposedHeaders: ['Content-Disposition'],
   })
 );
 app.use(express.json({ limit: '5mb' })); 

@@ -300,19 +300,26 @@ router.post('/:id/valider', authentifier, exigerRole('livreur', ...STAFF), async
 
 // GET /api/livraisons/:id/recu — reçu PDF (staff + livreur assigné)
 router.get('/:id/recu', authentifier, exigerRole(...TOUS_ROLES), async (req, res) => {
-  const livraison = await Livraison.findByPk(req.params.id, {
-    include: [{ model: User, as: 'livreur', attributes: ['id', 'name'] }],
-  });
-  if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
+  try {
+    const livraison = await Livraison.findByPk(req.params.id, {
+      include: [{ model: User, as: 'livreur', attributes: ['id', 'name'] }],
+    });
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable' });
 
-  if (!verifierAccesLivreur(req, livraison)) {
-    return res.status(403).json({ error: 'Accès non autorisé à cette livraison' });
+    if (!verifierAccesLivreur(req, livraison)) {
+      return res.status(403).json({ error: 'Accès non autorisé à cette livraison' });
+    }
+
+    const appName = await obtenirNomPlateforme();
+    const verificationUrl = urlVerification(livraison.qrToken);
+    const pdfBuffer = await genererRecuPDF(livraison, verificationUrl, appName);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', `attachment; filename="${livraison.numero}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Erreur génération reçu PDF:', err);
+    res.status(500).json({ error: 'Erreur lors de la génération du reçu', details: err.message });
   }
-
-  const pdfBuffer = await genererRecuPDF(livraison, urlVerification(livraison.qrToken), await obtenirNomPlateforme());
-  res.set('Content-Type', 'application/pdf');
-  res.set('Content-Disposition', `inline; filename="${livraison.numero}.pdf"`);
-  res.send(pdfBuffer);
 });
 
 export default router;

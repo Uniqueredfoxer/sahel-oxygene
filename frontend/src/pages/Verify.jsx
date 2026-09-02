@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShieldCheck, AlertTriangle, FileText, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, FileText, CheckCircle2, Loader2 } from 'lucide-react';
 import api from '../api/client';
+import { telechargerFichier } from '../utils/download';
 import Logo from '../components/Logo';
 import StatutPill from '../components/StatutPill';
 
@@ -10,6 +11,7 @@ export default function Verify() {
   const [data, setData] = useState(null);
   const [erreur, setErreur] = useState('');
   const [chargement, setChargement] = useState(true);
+  const [telechargement, setTelechargement] = useState(false);
 
   useEffect(() => {
     setChargement(true);
@@ -19,6 +21,18 @@ export default function Verify() {
       .catch(() => setErreur('Ce reçu est introuvable ou son code QR de vérification a expiré.'))
       .finally(() => setChargement(false));
   }, [qrToken]);
+
+  const telechargerRecu = async () => {
+    if (!qrToken) return;
+    setTelechargement(true);
+    try {
+      await telechargerFichier(`/public/recu/${qrToken}`, `recu-${data?.numero || qrToken}.pdf`);
+    } catch {
+      alert('Impossible de télécharger le reçu.');
+    } finally {
+      setTelechargement(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5 py-10 bg-sable-50">
@@ -101,15 +115,24 @@ export default function Verify() {
           </div>
 
           <div className="pt-2">
-            <a
+            <button
+              type="button"
+              onClick={telechargerRecu}
+              disabled={telechargement}
               className="btn-primary w-full flex items-center justify-center gap-2"
-              href={`/api/public/recu/${qrToken}`}
-              target="_blank"
-              rel="noreferrer"
             >
-              <FileText className="w-4 h-4" />
-              <span>Télécharger le PDF original</span>
-            </a>
+              {telechargement ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Téléchargement…</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  <span>Télécharger le PDF original</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}

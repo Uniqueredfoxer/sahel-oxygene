@@ -42,13 +42,10 @@ export default function LivraisonsTab() {
   const telechargerRecu = async (livraison) => {
     setTelechargeId(livraison.id);
     try {
-      if (livraison.qrToken) {
-        window.open(`/api/public/recu/${livraison.qrToken}`, '_blank');
-      } else {
-        await telechargerFichier(`/livraisons/${livraison.id}/recu`, `recu-${livraison.numero}.pdf`);
-      }
-    } catch {
-      toast.erreur('Impossible de générer le reçu.');
+      await telechargerFichier(`/livraisons/${livraison.id}/recu`, `recu-${livraison.numero}.pdf`);
+      toast.succes('Reçu téléchargé avec succès');
+    } catch (err) {
+      toast.erreur(messageErreur(err) || 'Impossible de générer le reçu.');
     } finally {
       setTelechargeId(null);
     }
